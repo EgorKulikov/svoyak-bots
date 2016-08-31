@@ -207,9 +207,9 @@ public abstract class TelegramBot {
         executor.execute(() -> {
             KickArgs args = new KickArgs(chatId, userId);
             JsonNode result = apiRequest("kickChatMember", args);
-            if (result != null && result.isBoolean() && result.asBoolean()) {
-                apiRequest("unbanChatMember", args);
-            }
+//            if (result != null && result.isBoolean() && result.asBoolean()) {
+//                apiRequest("unbanChatMember", args);
+//            }
         });
     }
 

@@ -19,8 +19,10 @@ public class SchedulerMain {
     private TelegramBot bot;
     private TelegramBot gameBot;
     private GameChat[] gameChats = {
-            new GameChat(-1001099601853L, "https://telegram.me/joinchat/BNC7REGKl71nBG_NqDB53A"),
-            new GameChat(-1001074401245L, "https://telegram.me/joinchat/BNC7REAKD93CeltEPKQTIw"),
+            new GameChat(-165421271L, "https://telegram.me/joinchat/DskhTQncINfKx_WvGXaf2Q"),
+            new GameChat(-158229596L, "https://telegram.me/joinchat/DskhTQluZFzfv0-HZl4lzg"),
+            new GameChat(-158229596L, "https://telegram.me/joinchat/DskhTQknOtDStaSM-7IdRg"),
+            new GameChat(-171488976L, "https://telegram.me/joinchat/DskhTQo4ttAnVADN4N1qug"),
     };
 
     private Executor executor = Executors.newSingleThreadExecutor();
