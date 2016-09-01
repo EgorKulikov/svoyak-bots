@@ -40,7 +40,8 @@ public class Game implements Runnable {
         AFTER_QUESTION,
         SPECIAL_SCORE,
         JUDGE_DECISION,
-        REGISTRATION
+        REGISTRATION,
+        BEFORE_GAME
     }
 
     private TopicSet set;
@@ -62,6 +63,7 @@ public class Game implements Runnable {
     private long origChatId;
     private long chatId;
     private SchedulerMain scheduler;
+    private final List<User> players;
     private List<Integer> topics;
 
     private volatile Executor executor = Executors.newSingleThreadExecutor();
@@ -71,6 +73,7 @@ public class Game implements Runnable {
     public Game(SchedulerMain scheduler, long originalChatId, long chatId, TopicSet set, List<Integer> topics,
             List<User> players) {
         this.scheduler = scheduler;
+        this.players = players;
         this.tournamentGame = false;
         origChatId = originalChatId;
         this.chatId = chatId;
@@ -89,7 +92,8 @@ public class Game implements Runnable {
                     actionExpires = Long.MAX_VALUE;
                     sendMessage("Регистрация открыта", null);
                 } else {
-                    startGame();
+                    state = State.BEFORE_GAME;
+                    sendMessage("Добро пожаловать", null, 30000);
                 }
             }
         });
@@ -105,7 +109,8 @@ public class Game implements Runnable {
         for (int i = topicId; i < stopAt; i++) {
             list.append((topics.get(i) + 1) + ". " + set.byIndex(topics.get(i)).topicName + "\n");
         }
-        sendMessage("Игра началась. " + set.shortName + "\n" + set.description + "\n" + list.toString(), null, 25000);
+        sendMessage("Игра началась. " + set.shortName + "\n" + set.description + "\n" + list.toString()
+                + "\n\nИгроки: " + Utils.userList(players), null, INTERMISSION);
         state = State.BEFORE_TOPIC;
         timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -125,6 +130,9 @@ public class Game implements Runnable {
     public void run() {
         if (System.currentTimeMillis() >= actionExpires) {
             switch (state) {
+            case BEFORE_GAME:
+                startGame();
+                return;
             case BEFORE_TOPIC:
                 if (topicId == stopAt) {
                     endGame();

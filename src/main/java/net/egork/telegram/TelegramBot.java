@@ -120,7 +120,7 @@ public abstract class TelegramBot {
         }
     }
 
-    private Message sendMessageImpl(long chatId, String text, ReplyKeyboardMarkup rkm) {
+    private Message sendMessageImpl(long chatId, String text, Object rkm) {
         long time = System.currentTimeMillis();
         SendMessageArgs args = new SendMessageArgs(chatId, text, ParseMode.HTML, rkm);
 
@@ -195,8 +195,8 @@ public abstract class TelegramBot {
             return;
         }
         sendMessageImpl(chatId, text, keyboard != null && keyboard.length != 0 ? new ReplyKeyboardMarkup(
-                new String[][]{keyboard}, null, null, null) :
-                new ReplyKeyboardMarkup(null, true, null, null));
+                new String[][]{keyboard}, null, true, null) :
+                new ReplyKeyboardHide(true, null));
         nextTimeSlot.put(chatId, System.currentTimeMillis() + 3000);
         if (callback != null) {
             callback.run();

@@ -120,6 +120,6 @@ enum class ParseMode {
 }
 
 data class SendMessageArgs(val chatId: Long, val text: String, val parseMode: ParseMode?,
-                           val replyMarkup: ReplyKeyboardMarkup?)
+                           val replyMarkup: Any?)
 
 data class KickArgs(val chatId: Long, val userId: Int)
