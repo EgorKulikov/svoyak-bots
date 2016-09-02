@@ -133,6 +133,7 @@ public class Game implements Runnable {
             switch (state) {
             case AFTER_GAME:
                 endGame();
+                return;
             case BEFORE_GAME:
                 startGame();
                 return;
