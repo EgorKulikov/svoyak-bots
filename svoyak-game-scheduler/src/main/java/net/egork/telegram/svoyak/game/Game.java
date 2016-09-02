@@ -41,7 +41,8 @@ public class Game implements Runnable {
         SPECIAL_SCORE,
         JUDGE_DECISION,
         REGISTRATION,
-        BEFORE_GAME
+        BEFORE_GAME,
+        AFTER_GAME
     }
 
     private TopicSet set;
@@ -130,12 +131,15 @@ public class Game implements Runnable {
     public void run() {
         if (System.currentTimeMillis() >= actionExpires) {
             switch (state) {
+            case AFTER_GAME:
+                endGame();
             case BEFORE_GAME:
                 startGame();
                 return;
             case BEFORE_TOPIC:
                 if (topicId == stopAt) {
-                    endGame();
+                    state = State.AFTER_GAME;
+                    sendMessage("Игра окончена!", null, 30000);
                     return;
                 }
                 currentTopic = set.byIndex(topics.get(topicId));
@@ -245,7 +249,6 @@ public class Game implements Runnable {
 
     private void endGame() {
         timer.cancel();
-        sendMessage("Игра окончена!", null);
         scheduler.endGame(origChatId, chatId, getScores().toString());
     }
 
@@ -253,6 +256,10 @@ public class Game implements Runnable {
         executor.execute(new Runnable() {
             @Override
             public void run() {
+                if (state == State.AFTER_GAME) {
+                    actionExpires = Math.max(actionExpires, System.currentTimeMillis() + 15000);
+                    return;
+                }
                 String text = message.getText();
                 if (text == null) {
                     return;
@@ -318,7 +325,8 @@ public class Game implements Runnable {
                 User user = message.getFrom();
                 if (command.equals("/abort")) {
                     showScore();
-                    endGame();
+                    state = State.AFTER_GAME;
+                    sendMessage("Игра окончена!", null, 30000);
                 } else if (command.equals("+") && state == State.QUESTION) {
                     if (answers.indexOf(user.getId()) != -1) {
                         return;
