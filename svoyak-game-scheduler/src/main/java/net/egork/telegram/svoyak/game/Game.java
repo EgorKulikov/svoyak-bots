@@ -94,6 +94,13 @@ public class Game implements Runnable {
                 } else {
                     state = State.BEFORE_GAME;
                     sendMessage("Добро пожаловать", null, 30000);
+                    timer = new Timer();
+                    timer.scheduleAtFixedRate(new TimerTask() {
+                        @Override
+                        public void run() {
+                            executor.execute(Game.this);
+                        }
+                    }, RATE, RATE);
                 }
             }
         });
@@ -112,13 +119,6 @@ public class Game implements Runnable {
         sendMessage("Игра началась. " + set.shortName + "\n" + set.description + "\n" + list.toString()
                 + "\n\nИгроки: " + Utils.userList(players), null, INTERMISSION);
         state = State.BEFORE_TOPIC;
-        timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                executor.execute(Game.this);
-            }
-        }, RATE, RATE);
     }
 
     private void sendMessage(String text, String[] keyboard, long delay) {
