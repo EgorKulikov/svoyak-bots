@@ -19,8 +19,7 @@ public class GameData {
     private List<User> spectators = new ArrayList<>();
     private long lastUpdated = System.currentTimeMillis();
 
-    public GameData(String setId) {
-        this.setId = setId;
+    public GameData() {
         lastUpdated = System.currentTimeMillis();
     }
 
@@ -92,7 +91,7 @@ public class GameData {
 
     @Override
     public String toString() {
-        return "Игра по пакету " + setId + "\n" +
+        return (setId == null ? "Стандартная игра" : ("Игра по пакету " + setId)) + "\n" +
                 "Тем - " + topicCount + "\n" +
                 "Игроков - " + minPlayers + "-" + maxPlayers + "\n" +
                 "Игроки: " + Utils.userList(players) + "\n" +

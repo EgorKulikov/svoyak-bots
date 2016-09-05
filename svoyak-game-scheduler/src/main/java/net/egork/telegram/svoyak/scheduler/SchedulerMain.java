@@ -1,16 +1,19 @@
 package net.egork.telegram.svoyak.scheduler;
 
 import net.egork.telegram.*;
-import net.egork.telegram.File;
 import net.egork.telegram.svoyak.data.Topic;
 import net.egork.telegram.svoyak.data.TopicSet;
 import net.egork.telegram.svoyak.game.Game;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+import static net.egork.telegram.svoyak.data.Data.*;
 
 /**
  * @author egor@egork.net
@@ -26,11 +29,7 @@ public class SchedulerMain {
     };
 
     private Executor executor = Executors.newSingleThreadExecutor();
-    private List<String> activePackages = new ArrayList<>();
-    private List<String> allPackages = new ArrayList<>();
-    private Map<String, TopicSet> sets = new HashMap<>();
     private Map<Long, ScheduleChat> chats = new HashMap<>();
-    private Map<Integer, Set<TopicId>> played = new HashMap<>();
 
     public static void main(String[] args) {
         new SchedulerMain().run();
@@ -38,10 +37,6 @@ public class SchedulerMain {
 
     private void run() {
         loadProperties();
-        loadList("active.list", activePackages);
-        loadList("all.list", allPackages);
-        loadSets();
-        loadPlayed();
         bot = new TelegramBot(System.getProperty("scheduler.token"), "Scheduler") {
             @Override
             protected void processMessage(Message message) {
@@ -67,86 +62,11 @@ public class SchedulerMain {
         }
     }
 
-    public String getSetName(String set) {
-        return sets.get(set).shortName;
-    }
-
-    private void loadSets() {
-        for (String s : allPackages) {
-            try {
-                TopicSet set = TopicSet.parseReader(new BufferedReader(new FileReader(s)));
-                sets.put(s, set);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    private void loadList(String fileName, List<String> list) {
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(fileName));
-            String s;
-            while ((s = reader.readLine()) != null) {
-                list.add(s.trim());
-            }
-            reader.close();
-        } catch (IOException ignored) {
-        }
-    }
-
-    private void loadPlayed() {
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader("played.list"));
-            String s;
-            while ((s = reader.readLine()) != null) {
-                int userId = Integer.parseInt(s);
-                s = reader.readLine();
-                int count = Integer.parseInt(s);
-                Set<TopicId> set = new HashSet<>();
-                for (int i = 0; i < count; i++) {
-                    String id = reader.readLine();
-                    int topic = Integer.parseInt(reader.readLine());
-                    set.add(new TopicId(id, topic));
-                }
-                played.put(userId, set);
-            }
-            reader.close();
-        } catch (IOException ignored) {
-        }
-    }
-
-    private void savePlayed() {
-        try {
-            PrintWriter out = new PrintWriter("played.list");
-            for (Map.Entry<Integer, Set<TopicId>> entry : played.entrySet()) {
-                out.println(entry.getKey());
-                out.println(entry.getValue().size());
-                for (TopicId topicId : entry.getValue()) {
-                    out.println(topicId.setId);
-                    out.println(topicId.topic);
-                }
-            }
-            out.close();
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void saveList(String fileName, List<String> list) {
-        try {
-            PrintWriter out = new PrintWriter(fileName);
-            for (String s : list) {
-                out.println(s);
-            }
-            out.close();
-        } catch (IOException ignored) {
-        }
-    }
-
     private void loadProperties() {
         Properties properties = new Properties();
         try {
-            properties.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("application.properties"));
+            properties.load(Thread.currentThread().getContextClassLoader().
+                    getResourceAsStream("application.properties"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -172,7 +92,7 @@ public class SchedulerMain {
                 if (message.getNewChatMember() != null) {
                     kickIfNeeded(chat, message.getNewChatMember());
                 }
-                break;
+                return;
             }
         }
         ScheduleChat chat = chats.get(chatId);
@@ -219,12 +139,7 @@ public class SchedulerMain {
                 } else {
                     TopicSet set = newSet;
                     String id = document.getFileName();
-                    sets.put(id, set);
-                    allPackages.remove(id);
-                    activePackages.remove(id);
-                    allPackages.add(id);
-                    saveList("all.list", allPackages);
-                    saveSet(id, set);
+                    DATA.addNewSet(id, set);
                     bot.sendMessage(chatId, "Пакет " + set.shortName + " загружен. Всего " + set.topics.size() +
                             " " + Topic.getTopicWord(set.topics.size()));
                 }
@@ -243,34 +158,32 @@ public class SchedulerMain {
             switch (command) {
             case "/activate":
             case "включить":
-                if (set == null || !allPackages.contains(set)) {
+                if (set == null || DATA.getSet(set) == null) {
                     bot.sendMessage(chatId, "Неизвестный пакет - " + set);
-                } else if (activePackages.contains(set)) {
+                } else if (DATA.isActive(set)) {
                     bot.sendMessage(chatId, "Пакет уже включен");
                 } else {
-                    activePackages.add(set);
-                    saveList("active.list", activePackages);
+                    DATA.enableSet(set);
                     bot.sendMessage(chatId, "Пакет включен - " + set);
                 }
                 break;
             case "/deactivate":
             case "выключить":
-                if (set == null || !allPackages.contains(set)) {
+                if (set == null || DATA.getSet(set) == null) {
                     bot.sendMessage(chatId, "Неизвестный пакет - " + set);
-                } else if (!activePackages.contains(set)) {
+                } else if (!DATA.isActive(set)) {
                     bot.sendMessage(chatId, "Пакет уже выключен");
                 } else {
-                    activePackages.remove(set);
-                    saveList("active.list", activePackages);
+                    DATA.disableSet(set);
                     bot.sendMessage(chatId, "Пакет выключен - " + set);
                 }
                 break;
             case "/alltopics":
             case "темы":
-                if (set == null || !allPackages.contains(set)) {
+                if (set == null || DATA.getSet(set) == null) {
                     bot.sendMessage(chatId, "Неизвестный пакет - " + set);
                 } else {
-                    TopicSet topicSet = sets.get(set);
+                    TopicSet topicSet = DATA.getSet(set);
                     StringBuilder list = new StringBuilder();
                     list.append("Список тем:\n");
                     for (int i = 0; i < topicSet.topics.size(); i++) {
@@ -286,16 +199,6 @@ public class SchedulerMain {
         }
     }
 
-    private void saveSet(String id, TopicSet set) {
-        try {
-            PrintWriter out = new PrintWriter(id);
-            set.saveSet(out);
-            out.close();
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private boolean isAuthorized(User from) {
         return "Kroge".equals(from.getUsername());
     }
@@ -304,66 +207,56 @@ public class SchedulerMain {
         return bot;
     }
 
-    public String getLastSet() {
-        if (activePackages.isEmpty()) {
-            return null;
-        }
-        return activePackages.get(activePackages.size() - 1);
-    }
-
-    public boolean hasSet(String argument) {
-        return allPackages.contains(argument);
-    }
-
     public void tryStartNewGame(long id, GameData currentGame) {
-        TopicSet topicSet = sets.get(currentGame.getSetId());
-        List<Integer> topics = new ArrayList<>();
-        for (int i = 1; i <= topicSet.topics.size(); i++) {
-            TopicId topicId = new TopicId(currentGame.getSetId(), i);
-            boolean good = true;
-            for (User user : currentGame.getPlayers()) {
-                Set<TopicId> set = played.get(user.getId());
-                if (set != null && set.contains(topicId)) {
-                    good = false;
+        List<String> setIds = currentGame.getSetId() == null ? DATA.getActive() : Arrays.asList(currentGame.getSetId());
+        for (String setId : setIds) {
+            TopicSet topicSet = DATA.getSet(currentGame.getSetId());
+            if (topicSet == null) {
+                bot.sendMessage(id, "Пакет был удален");
+                return;
+            }
+            List<Integer> topics = new ArrayList<>();
+            for (int i = 1; i <= topicSet.topics.size(); i++) {
+                TopicId topicId = new TopicId(currentGame.getSetId(), i);
+                boolean good = true;
+                for (User user : currentGame.getPlayers()) {
+                    Set<TopicId> set = DATA.getPlayed(user.getId());
+                    if (set != null && set.contains(topicId)) {
+                        good = false;
+                    }
+                }
+                if (good) {
+                    topics.add(i - 1);
+                    if (topics.size() == currentGame.getTopicCount()) {
+                        break;
+                    }
                 }
             }
-            if (good) {
-                topics.add(i - 1);
-                if (topics.size() == currentGame.getTopicCount()) {
+            if (topics.size() != currentGame.getTopicCount()) {
+                continue;
+            }
+            for (int topic : topics) {
+                TopicId topicId = new TopicId(currentGame.getSetId(), topic + 1);
+                for (User user : currentGame.getPlayers()) {
+                    DATA.addPlayed(user.getId(), topicId);
+                }
+                for (User user : currentGame.getSpectators()) {
+                    DATA.addPlayed(user.getId(), topicId);
+                }
+            }
+            DATA.commitPlayed();
+            currentGame.setSetId(setId);
+            for (GameChat gameChat : gameChats) {
+                if (gameChat.isFree()) {
+                    gameChat.setFree(false);
+                    bot.sendMessage(id, "Для игры пройдите по ссылке: " + gameChat.inviteLink);
+                    gameChat.startGame(this, id, topicSet, topics, currentGame);
                     break;
                 }
             }
-        }
-        if (topics.size() != currentGame.getTopicCount()) {
-            bot.sendMessage(id, "В текущем пакете недостаточно тем, которые бы не играли все игроки");
             return;
         }
-        for (int topic : topics) {
-            TopicId topicId = new TopicId(currentGame.getSetId(), topic + 1);
-            for (User user : currentGame.getPlayers()) {
-                Set<TopicId> set = played.get(user.getId());
-                if (set == null) {
-                    played.put(user.getId(), set = new HashSet<>());
-                }
-                set.add(topicId);
-            }
-            for (User user : currentGame.getSpectators()) {
-                Set<TopicId> set = played.get(user.getId());
-                if (set == null) {
-                    played.put(user.getId(), set = new HashSet<>());
-                }
-                set.add(topicId);
-            }
-        }
-        savePlayed();
-        for (GameChat gameChat : gameChats) {
-            if (gameChat.isFree()) {
-                gameChat.setFree(false);
-                bot.sendMessage(id, "Для игры пройдите по ссылке: " + gameChat.inviteLink);
-                gameChat.startGame(this, id, topicSet, topics, currentGame);
-                break;
-            }
-        }
+        bot.sendMessage(id, "В текущем пакете недостаточно тем, которые бы не играли все игроки");
     }
 
     public TelegramBot getGameBot() {

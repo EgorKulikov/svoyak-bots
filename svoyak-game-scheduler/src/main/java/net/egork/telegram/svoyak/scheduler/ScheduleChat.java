@@ -3,10 +3,13 @@ package net.egork.telegram.svoyak.scheduler;
 import net.egork.telegram.Message;
 import net.egork.telegram.svoyak.Utils;
 
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+import static net.egork.telegram.svoyak.data.Data.DATA;
 
 /**
  * @author egor@egork.net
@@ -52,12 +55,12 @@ public class ScheduleChat {
         case "/game":
         case "игра":
             if (currentGame == null) {
-                String lastSet = scheduler.getLastSet();
+                String lastSet = DATA.getLastSet();
                 if (lastSet == null) {
                     sendMessage("Ни один пакет не активен");
                     return;
                 }
-                currentGame = new GameData(lastSet);
+                currentGame = new GameData();
                 sendMessage(currentGame.toString());
             } else {
                 sendMessage("Существует активная игра");
@@ -67,7 +70,7 @@ public class ScheduleChat {
         case "пакет":
             if (currentGame == null) {
                 sendMessage("Игра не начата");
-            } else if (!scheduler.hasSet(argument)) {
+            } else if (!DATA.hasSet(argument)) {
                 sendMessage("Пакет не обнаружен - " + argument);
             } else {
                 currentGame.setSetId(argument);
@@ -147,6 +150,20 @@ public class ScheduleChat {
                 scheduler.tryStartNewGame(id, currentGame);
                 currentGame = null;
             }
+            break;
+        case "/abort":
+            sendMessage("Игра отменена");
+            currentGame = null;
+            break;
+        case "/list":
+        case "список":
+            List<String> active = DATA.getActive();
+            StringBuilder list = new StringBuilder();
+            for (String id : active) {
+                list.append(id).append(" - ").append(DATA.getSet(id).shortName).append("\n");
+            }
+            sendMessage("Список пакетов:\n" + list);
+            break;
         default:
             break;
         }
