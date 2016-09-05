@@ -217,7 +217,7 @@ public class SchedulerMain {
             }
             List<Integer> topics = new ArrayList<>();
             for (int i = 1; i <= topicSet.topics.size(); i++) {
-                TopicId topicId = new TopicId(currentGame.getSetId(), i);
+                TopicId topicId = new TopicId(setId, i);
                 boolean good = true;
                 for (User user : currentGame.getPlayers()) {
                     Set<TopicId> set = DATA.getPlayed(user.getId());
@@ -236,7 +236,7 @@ public class SchedulerMain {
                 continue;
             }
             for (int topic : topics) {
-                TopicId topicId = new TopicId(currentGame.getSetId(), topic + 1);
+                TopicId topicId = new TopicId(setId, topic + 1);
                 for (User user : currentGame.getPlayers()) {
                     DATA.addPlayed(user.getId(), topicId);
                 }
