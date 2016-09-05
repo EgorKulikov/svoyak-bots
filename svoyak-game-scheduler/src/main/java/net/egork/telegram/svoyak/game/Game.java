@@ -32,6 +32,10 @@ public class Game implements Runnable {
     private final boolean tournamentGame;
     private int judgeId;
 
+    public int getCurrentTopic() {
+        return topicId;
+    }
+
     private enum State {
         BEFORE_TOPIC,
         BEFORE_FIRST_QUESTION,

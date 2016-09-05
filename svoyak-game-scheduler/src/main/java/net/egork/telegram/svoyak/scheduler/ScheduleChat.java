@@ -164,6 +164,10 @@ public class ScheduleChat {
             }
             sendMessage("Список пакетов:\n" + list);
             break;
+        case "/status":
+        case "статус":
+            String games = scheduler.getGameStatus();
+            sendMessage((currentGame != null ? "Открыта регистрация\n" : "Регистрация не открыта\n") + games);
         default:
             break;
         }

@@ -1,6 +1,7 @@
 package net.egork.telegram.svoyak.scheduler;
 
 import net.egork.telegram.*;
+import net.egork.telegram.svoyak.Utils;
 import net.egork.telegram.svoyak.data.Topic;
 import net.egork.telegram.svoyak.data.TopicSet;
 import net.egork.telegram.svoyak.game.Game;
@@ -276,5 +277,18 @@ public class SchedulerMain {
                 }
             }
         }
+    }
+
+    public String getGameStatus() {
+        StringBuilder builder = new StringBuilder();
+        for (GameChat chat : gameChats) {
+            if (!chat.isFree()) {
+                builder.append("\nИгра по пакету ").append(DATA.getSet(chat.getGameData().getSetId()).shortName);
+                builder.append("\nИгроки: ").append(Utils.userList(chat.getGameData().getPlayers()));
+                builder.append("\nТема ").append(chat.getGame().getCurrentTopic() + 1).append("/")
+                        .append(chat.getGameData().getTopicCount());
+            }
+        }
+        return builder.toString();
     }
 }

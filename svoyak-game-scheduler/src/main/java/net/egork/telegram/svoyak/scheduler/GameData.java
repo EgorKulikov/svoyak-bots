@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class GameData {
     private String setId;
-    private int topicCount = 8;
+    private int topicCount = 6;
     private int minPlayers = 3;
     private int maxPlayers = 4;
     private List<User> players = new ArrayList<>();
