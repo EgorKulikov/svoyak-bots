@@ -210,7 +210,7 @@ public class SchedulerMain {
     public void tryStartNewGame(long id, GameData currentGame) {
         List<String> setIds = currentGame.getSetId() == null ? DATA.getActive() : Arrays.asList(currentGame.getSetId());
         for (String setId : setIds) {
-            TopicSet topicSet = DATA.getSet(currentGame.getSetId());
+            TopicSet topicSet = DATA.getSet(setId);
             if (topicSet == null) {
                 bot.sendMessage(id, "Пакет был удален");
                 return;
