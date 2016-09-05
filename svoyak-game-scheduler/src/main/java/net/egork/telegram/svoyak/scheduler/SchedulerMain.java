@@ -42,13 +42,13 @@ public class SchedulerMain {
         loadList("all.list", allPackages);
         loadSets();
         loadPlayed();
-        bot = new TelegramBot(System.getProperty("scheduler.token")) {
+        bot = new TelegramBot(System.getProperty("scheduler.token"), "Scheduler") {
             @Override
             protected void processMessage(Message message) {
                 executor.execute(() -> SchedulerMain.this.processMessage(message));
             }
         };
-        gameBot = new TelegramBot(System.getProperty("play.token")) {
+        gameBot = new TelegramBot(System.getProperty("play.token"), "Play") {
             @Override
             protected void processMessage(Message message) {
                 executor.execute(() -> processPlayMessage(message));

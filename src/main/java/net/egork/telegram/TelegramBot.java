@@ -11,6 +11,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -28,7 +29,9 @@ import java.util.concurrent.Executors;
  */
 public abstract class TelegramBot {
     private final String apiUri;
-    private final HttpClient client = HttpClientBuilder.create().build();
+    private final HttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(
+            RequestConfig.custom().setConnectTimeout(1000).setConnectionRequestTimeout(1000).build()
+    ).build();
     private final ObjectMapper mapper = new ObjectMapper()
                 .registerModules(new KotlinModule())
                 .setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES)
@@ -37,10 +40,11 @@ public abstract class TelegramBot {
     private Integer offset;
     private Logger logger = LogManager.getLogger(TelegramBot.class);
     private final Map<Long, Long> nextTimeSlot = new HashMap<>();
-    private Executor executor = Executors.newSingleThreadExecutor();
+    private Executor executor;
 
-    public TelegramBot(String token) {
+    public TelegramBot(String token, String name) {
         apiUri = "https://api.telegram.org/bot" + token + "/";
+        executor = Executors.newSingleThreadExecutor(r -> new Thread(r, "Executor for " + name));
         new Thread(() -> {
             try {
                 while (true) {
@@ -56,7 +60,7 @@ public abstract class TelegramBot {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-        }, "Telegram bot").start();
+        }, "Telegram bot " + name).start();
     }
 
     private List<Update> getUpdates() {
@@ -206,10 +210,7 @@ public abstract class TelegramBot {
     public void kickPlayer(long chatId, int userId) {
         executor.execute(() -> {
             KickArgs args = new KickArgs(chatId, userId);
-            JsonNode result = apiRequest("kickChatMember", args);
-//            if (result != null && result.isBoolean() && result.asBoolean()) {
-//                apiRequest("unbanChatMember", args);
-//            }
+            apiRequest("kickChatMember", args);
         });
     }
 
