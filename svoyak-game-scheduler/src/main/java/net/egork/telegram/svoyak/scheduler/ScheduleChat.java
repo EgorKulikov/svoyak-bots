@@ -42,6 +42,18 @@ public class ScheduleChat {
         scheduler.getBot().sendMessage(id, message);
     }
 
+    private void createGame() {
+        if (currentGame != null) {
+            return;
+        }
+        String lastSet = DATA.getLastSet();
+        if (lastSet == null) {
+            sendMessage("Ни один пакет не активен");
+            return;
+        }
+        currentGame = new GameData();
+    }
+
     public void processMessage(Message message) {
         String text = message.getText();
         if (text == null || text.trim().isEmpty()) {
@@ -55,13 +67,9 @@ public class ScheduleChat {
         case "/game":
         case "игра":
             if (currentGame == null) {
-                String lastSet = DATA.getLastSet();
-                if (lastSet == null) {
-                    sendMessage("Ни один пакет не активен");
-                    return;
-                }
-                currentGame = new GameData();
-                sendMessage(currentGame.toString());
+                createGame();
+                if (currentGame != null)
+                    sendMessage(currentGame.toString());
             } else {
                 sendMessage("Существует активная игра");
             }
@@ -113,9 +121,13 @@ public class ScheduleChat {
             break;
         case "/register":
         case "регистрация":
-            if (currentGame == null) {
-                sendMessage("Игра не начата");
-            } else if (currentGame.getPlayers().size() == currentGame.getMaxPlayers()) {
+            if (currentGame == null)
+                createGame();
+
+            if (currentGame == null)
+                break;
+
+            if (currentGame.getPlayers().size() == currentGame.getMaxPlayers()) {
                 sendMessage("Все места заняты");
             } else {
                 currentGame.addPlayer(message.getFrom());
