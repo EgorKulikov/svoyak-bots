@@ -1,6 +1,7 @@
 package net.egork.telegram.svoyak.data;
 
 import net.egork.telegram.svoyak.scheduler.TopicId;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
@@ -227,8 +228,36 @@ public class Data {
             }
         }
         for (Map.Entry<Integer, Integer> entry : updated.entrySet()) {
-            rating.put(entry.getKey(), entry.getValue());
+            rating.put(entry.getKey(), Math.max(1, entry.getValue()));
         }
         savePlayers();
+    }
+
+    public String getRatingList() {
+        List<RatingEntry> list = new ArrayList<>();
+        for (Map.Entry<Integer, String> entry : players.entrySet()) {
+            list.add(new RatingEntry(entry.getValue(), rating.get(entry.getKey())));
+        }
+        Collections.sort(list);
+        StringBuilder builder = new StringBuilder();
+        for (RatingEntry entry : list) {
+            builder.append(entry.name + " " + entry.rating + "\n");
+        }
+        return builder.toString();
+    }
+
+    private static class RatingEntry implements Comparable<RatingEntry> {
+        public final String name;
+        public final int rating;
+
+        private RatingEntry(String name, int rating) {
+            this.name = name;
+            this.rating = rating;
+        }
+
+        @Override
+        public int compareTo(@NotNull RatingEntry o) {
+            return o.rating - rating;
+        }
     }
 }

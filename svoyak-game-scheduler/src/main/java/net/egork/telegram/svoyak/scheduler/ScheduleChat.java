@@ -181,6 +181,11 @@ public class ScheduleChat {
         case "статус":
             String games = scheduler.getGameStatus();
             sendMessage((currentGame != null ? "Открыта регистрация\n" : "Регистрация не открыта\n") + games);
+            break;
+        case "/rating":
+        case "рейтинг":
+            sendMessage("<b>Рейтинг игроков:</b>\n" + DATA.getRatingList());
+            break;
         default:
             break;
         }
