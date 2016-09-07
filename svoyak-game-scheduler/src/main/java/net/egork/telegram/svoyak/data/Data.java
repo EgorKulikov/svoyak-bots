@@ -15,12 +15,45 @@ public class Data {
     private List<String> allPackages = new ArrayList<>();
     private Map<String, TopicSet> sets = new HashMap<>();
     private Map<Integer, Set<TopicId>> played = new HashMap<>();
+    private Map<Integer, String> players = new HashMap<>();
+    private Map<Integer, Integer> rating = new HashMap<>();
 
     private Data() {
         loadList("active.list", activePackages);
         loadList("all.list", allPackages);
+        loadPlayers();
         loadSets();
         loadPlayed();
+    }
+
+    private void loadPlayers() {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader("player.list"));
+            String s;
+            while ((s = reader.readLine()) != null) {
+                int userId = Integer.parseInt(s);
+                s = reader.readLine();
+                String name = s;
+                s = reader.readLine();
+                int rat = Integer.parseInt(s);
+                players.put(userId, name);
+                rating.put(userId, rat);
+            }
+            reader.close();
+        } catch (IOException ignored) {
+        }
+    }
+
+    private void savePlayers() {
+        try {
+            PrintWriter out = new PrintWriter("player.list");
+            for (Map.Entry<Integer, String> entry : players.entrySet()) {
+                out.println(entry.getKey());
+                out.println(entry.getValue());
+                out.println(rating.get(entry.getKey()));
+            }
+        } catch (IOException ignored) {
+        }
     }
 
     private void loadSets() {
@@ -161,5 +194,41 @@ public class Data {
 
     public List<String> getActive() {
         return activePackages;
+    }
+
+    public int getRating(int id) {
+        if (rating.containsKey(id)) {
+            return rating.get(id);
+        }
+        return 1500;
+    }
+
+    public void updateRatings(Map<Integer, Integer> score, Map<Integer, String> names) {
+        for (Map.Entry<Integer, String> entry : names.entrySet()) {
+            players.put(entry.getKey(), entry.getValue());
+        }
+        Map<Integer, Integer> updated = new HashMap<>();
+        for (Map.Entry<Integer, Integer> entry1 : score.entrySet()) {
+            updated.put(entry1.getKey(), rating.get(entry1.getKey()));
+            for (Map.Entry<Integer, Integer> entry2 : score.entrySet()) {
+                if (entry1 == entry2) {
+                    break;
+                }
+                int ra = getRating(entry1.getKey());
+                int rb = getRating(entry2.getKey());
+                double ea = 1 / (1 + Math.pow(10, (rb - ra) / 400d));
+                double eb = 1 - ea;
+                double sa = entry1.getValue() < entry2.getValue() ? 0 : entry1.getValue() > entry2.getValue() ? 1 : 0.5;
+                double sb = 1 - sa;
+                int da = (int) Math.round(10 * (sa - ea));
+                int db = (int) Math.round(10 * (sb - eb));
+                updated.put(entry1.getKey(), updated.get(entry1.getKey()) + da);
+                updated.put(entry2.getKey(), updated.get(entry2.getKey()) + db);
+            }
+        }
+        for (Map.Entry<Integer, Integer> entry : updated.entrySet()) {
+            rating.put(entry.getKey(), entry.getValue());
+        }
+        savePlayers();
     }
 }

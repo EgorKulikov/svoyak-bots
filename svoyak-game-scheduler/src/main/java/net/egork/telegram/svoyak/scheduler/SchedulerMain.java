@@ -5,6 +5,7 @@ import net.egork.telegram.svoyak.Utils;
 import net.egork.telegram.svoyak.data.Topic;
 import net.egork.telegram.svoyak.data.TopicSet;
 import net.egork.telegram.svoyak.game.Game;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -264,8 +265,11 @@ public class SchedulerMain {
         return gameBot;
     }
 
-    public void endGame(long origChatId, long chatId, String score) {
-        bot.sendMessage(origChatId, "Игра завершена.\n" + score);
+    public void endGame(long origChatId, long chatId, Map<Integer, Integer> score, Map<Integer, String> players) {
+        Map<Integer, Integer> currentRatings = new HashMap<>();
+        for (Integer id : players.keySet()) {
+            currentRatings.put(id, DATA.getRating(id));
+        }
         for (GameChat gameChat : gameChats) {
             if (gameChat.chatId == chatId) {
                 gameChat.setFree(true);
@@ -276,6 +280,42 @@ public class SchedulerMain {
                     kickPlayer(chatId, user);
                 }
             }
+        }
+        DATA.updateRatings(score, players);
+        Map<Integer, Integer> updatedRatings = new HashMap<>();
+        for (Integer id : players.keySet()) {
+            updatedRatings.put(id, DATA.getRating(id));
+        }
+        List<GameResultEntry> entries = new ArrayList<>();
+        for (Map.Entry<Integer, String> entry : players.entrySet()) {
+            Integer key = entry.getKey();
+            entries.add(new GameResultEntry(entry.getValue(), score.get(key), updatedRatings.get(key),
+                    updatedRatings.get(key) - currentRatings.get(key)));
+        }
+        Collections.sort(entries);
+        StringBuilder builder = new StringBuilder();
+        for (GameResultEntry entry : entries) {
+            builder.append(entry.name + " " + entry.points + " " + entry.rating + "(" + entry.delta + ")\n");
+        }
+        bot.sendMessage(origChatId, "<b>Игра завершена.</b>\n" + builder.toString());
+    }
+
+    private static class GameResultEntry implements Comparable<GameResultEntry> {
+        public final String name;
+        public final int points;
+        public final int rating;
+        public final int delta;
+
+        public GameResultEntry(String name, int points, int rating, int delta) {
+            this.name = name;
+            this.points = points;
+            this.rating = rating;
+            this.delta = delta;
+        }
+
+        @Override
+        public int compareTo(@NotNull GameResultEntry o) {
+            return o.points - points;
         }
     }
 

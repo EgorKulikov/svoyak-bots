@@ -254,7 +254,7 @@ public class Game implements Runnable {
 
     private void endGame() {
         timer.cancel();
-        scheduler.endGame(origChatId, chatId, getScores().toString());
+        scheduler.endGame(origChatId, chatId, score, users);
     }
 
     public void process(Message message) {
