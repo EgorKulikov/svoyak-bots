@@ -68,8 +68,9 @@ public class ScheduleChat {
         case "игра":
             if (currentGame == null) {
                 createGame();
-                if (currentGame != null)
+                if (currentGame != null) {
                     sendMessage(currentGame.toString());
+                }
             } else {
                 sendMessage("Существует активная игра");
             }
@@ -121,12 +122,12 @@ public class ScheduleChat {
             break;
         case "/register":
         case "регистрация":
-            if (currentGame == null)
+            if (currentGame == null) {
                 createGame();
-
-            if (currentGame == null)
+            }
+            if (currentGame == null) {
                 break;
-
+            }
             if (currentGame.getPlayers().size() == currentGame.getMaxPlayers()) {
                 sendMessage("Все места заняты");
             } else {
