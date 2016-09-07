@@ -53,6 +53,7 @@ public class Data {
                 out.println(entry.getValue());
                 out.println(rating.get(entry.getKey()));
             }
+            out.close();
         } catch (IOException ignored) {
         }
     }
