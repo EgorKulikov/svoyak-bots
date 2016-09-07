@@ -209,8 +209,10 @@ public class Data {
             players.put(entry.getKey(), entry.getValue());
         }
         Map<Integer, Integer> updated = new HashMap<>();
+        for (Map.Entry<Integer, Integer> entry : score.entrySet()) {
+            updated.put(entry.getKey(), getRating(entry.getKey()));
+        }
         for (Map.Entry<Integer, Integer> entry1 : score.entrySet()) {
-            updated.put(entry1.getKey(), rating.get(entry1.getKey()));
             for (Map.Entry<Integer, Integer> entry2 : score.entrySet()) {
                 if (entry1 == entry2) {
                     break;

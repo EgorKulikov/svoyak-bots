@@ -295,7 +295,7 @@ public class SchedulerMain {
         Collections.sort(entries);
         StringBuilder builder = new StringBuilder();
         for (GameResultEntry entry : entries) {
-            builder.append(entry.name + " " + entry.points + " " + entry.rating + "(" + entry.delta + ")\n");
+            builder.append(entry.name + " " + entry.points + " " + entry.rating + " (" + entry.delta + ")\n");
         }
         bot.sendMessage(origChatId, "<b>Игра завершена.</b>\n" + builder.toString());
     }
