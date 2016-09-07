@@ -285,8 +285,8 @@ public class SchedulerMain {
             if (!chat.isFree()) {
                 builder.append("\nИгра по пакету ").append(DATA.getSet(chat.getGameData().getSetId()).shortName);
                 builder.append("\nИгроки: ").append(Utils.userList(chat.getGameData().getPlayers()));
-                builder.append("\nТема ").append(chat.getGame().getCurrentTopic() + 1).append("/")
-                        .append(chat.getGameData().getTopicCount()).append("\n");
+                builder.append("\nТема ").append(Math.min(chat.getGame().getCurrentTopic() + 1, chat.getGameData().
+                        getTopicCount())).append("/").append(chat.getGameData().getTopicCount()).append("\n");
             }
         }
         return builder.toString();
