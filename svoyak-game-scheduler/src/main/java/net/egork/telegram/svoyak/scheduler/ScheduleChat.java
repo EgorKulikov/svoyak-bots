@@ -3,10 +3,13 @@ package net.egork.telegram.svoyak.scheduler;
 import net.egork.telegram.Message;
 import net.egork.telegram.svoyak.Utils;
 
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+import static net.egork.telegram.svoyak.data.Data.DATA;
 
 /**
  * @author egor@egork.net
@@ -39,6 +42,18 @@ public class ScheduleChat {
         scheduler.getBot().sendMessage(id, message);
     }
 
+    private void createGame() {
+        if (currentGame != null) {
+            return;
+        }
+        String lastSet = DATA.getLastSet();
+        if (lastSet == null) {
+            sendMessage("Ни один пакет не активен");
+            return;
+        }
+        currentGame = new GameData();
+    }
+
     public void processMessage(Message message) {
         String text = message.getText();
         if (text == null || text.trim().isEmpty()) {
@@ -52,13 +67,10 @@ public class ScheduleChat {
         case "/game":
         case "игра":
             if (currentGame == null) {
-                String lastSet = scheduler.getLastSet();
-                if (lastSet == null) {
-                    sendMessage("Ни один пакет не активен");
-                    return;
+                createGame();
+                if (currentGame != null) {
+                    sendMessage(currentGame.toString());
                 }
-                currentGame = new GameData(lastSet);
-                sendMessage(currentGame.toString());
             } else {
                 sendMessage("Существует активная игра");
             }
@@ -67,7 +79,7 @@ public class ScheduleChat {
         case "пакет":
             if (currentGame == null) {
                 sendMessage("Игра не начата");
-            } else if (!scheduler.hasSet(argument)) {
+            } else if (!DATA.hasSet(argument)) {
                 sendMessage("Пакет не обнаружен - " + argument);
             } else {
                 currentGame.setSetId(argument);
@@ -111,8 +123,12 @@ public class ScheduleChat {
         case "/register":
         case "регистрация":
             if (currentGame == null) {
-                sendMessage("Игра не начата");
-            } else if (currentGame.getPlayers().size() == currentGame.getMaxPlayers()) {
+                createGame();
+            }
+            if (currentGame == null) {
+                break;
+            }
+            if (currentGame.getPlayers().size() == currentGame.getMaxPlayers()) {
                 sendMessage("Все места заняты");
             } else {
                 currentGame.addPlayer(message.getFrom());
@@ -147,6 +163,29 @@ public class ScheduleChat {
                 scheduler.tryStartNewGame(id, currentGame);
                 currentGame = null;
             }
+            break;
+        case "/abort":
+            sendMessage("Игра отменена");
+            currentGame = null;
+            break;
+        case "/list":
+        case "список":
+            List<String> active = DATA.getActive();
+            StringBuilder list = new StringBuilder();
+            for (String id : active) {
+                list.append(id).append(" - ").append(DATA.getSet(id).shortName).append("\n");
+            }
+            sendMessage("Список пакетов:\n" + list);
+            break;
+        case "/status":
+        case "статус":
+            String games = scheduler.getGameStatus();
+            sendMessage((currentGame != null ? "Открыта регистрация\n" : "Регистрация не открыта\n") + games);
+            break;
+        case "/rating":
+        case "рейтинг":
+            sendMessage("<b>Рейтинг игроков:</b>\n" + DATA.getRatingList());
+            break;
         default:
             break;
         }

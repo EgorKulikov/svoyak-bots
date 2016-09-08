@@ -4,6 +4,8 @@ import net.egork.telegram.User;
 
 import java.util.List;
 
+import static net.egork.telegram.svoyak.data.Data.DATA;
+
 /**
  * @author egor@egork.net
  */
@@ -14,7 +16,7 @@ public class Utils {
             if (builder.length() > 0) {
                 builder.append(", ");
             }
-            builder.append(name(user));
+            builder.append(name(user) + " (" + DATA.getRating(user.getId()) + ")");
         }
         return builder.toString();
     }

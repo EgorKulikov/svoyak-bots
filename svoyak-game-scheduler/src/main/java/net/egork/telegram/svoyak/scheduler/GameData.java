@@ -12,15 +12,14 @@ import java.util.List;
  */
 public class GameData {
     private String setId;
-    private int topicCount = 8;
+    private int topicCount = 6;
     private int minPlayers = 3;
     private int maxPlayers = 4;
     private List<User> players = new ArrayList<>();
     private List<User> spectators = new ArrayList<>();
     private long lastUpdated = System.currentTimeMillis();
 
-    public GameData(String setId) {
-        this.setId = setId;
+    public GameData() {
         lastUpdated = System.currentTimeMillis();
     }
 
@@ -92,7 +91,7 @@ public class GameData {
 
     @Override
     public String toString() {
-        return "Игра по пакету " + setId + "\n" +
+        return (setId == null ? "Стандартная игра" : ("Игра по пакету " + setId)) + "\n" +
                 "Тем - " + topicCount + "\n" +
                 "Игроков - " + minPlayers + "-" + maxPlayers + "\n" +
                 "Игроки: " + Utils.userList(players) + "\n" +

@@ -32,6 +32,10 @@ public class Game implements Runnable {
     private final boolean tournamentGame;
     private int judgeId;
 
+    public int getCurrentTopic() {
+        return topicId;
+    }
+
     private enum State {
         BEFORE_TOPIC,
         BEFORE_FIRST_QUESTION,
@@ -250,7 +254,7 @@ public class Game implements Runnable {
 
     private void endGame() {
         timer.cancel();
-        scheduler.endGame(origChatId, chatId, getScores().toString());
+        scheduler.endGame(origChatId, chatId, score, users);
     }
 
     public void process(Message message) {
