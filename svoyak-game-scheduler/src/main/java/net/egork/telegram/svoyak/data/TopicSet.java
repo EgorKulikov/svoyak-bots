@@ -262,6 +262,12 @@ public class TopicSet {
                 return new Topic(name, questions);
             }
         }
+        if (data.size() >= 5) {
+            for (String ss : data) {
+                System.err.println(ss);
+            }
+            System.err.println();
+        }
         return null;
     }
 
