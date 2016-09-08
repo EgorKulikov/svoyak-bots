@@ -230,6 +230,10 @@ public class TopicSet {
                     if (s.startsWith(prefix + " ") || s.startsWith(prefix + ".") || s.startsWith(prefix + ":")) {
                         Question q = parseQuestion(data.subList(i, last), multiplier * current, 10 * current);
                         if (q.answers.isEmpty()) {
+                            for (String ss : data) {
+                                System.err.println(ss);
+                            }
+                            System.err.println();
                             return null;
                         }
                         questions.add(q);
