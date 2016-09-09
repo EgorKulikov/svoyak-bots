@@ -265,21 +265,10 @@ public class SchedulerMain {
         return gameBot;
     }
 
-    public void endGame(long origChatId, long chatId, Map<Integer, Integer> score, Map<Integer, String> players) {
+    public void endGame(long origChatId, TopicSet set, Map<Integer, Integer> score, Map<Integer, String> players) {
         Map<Integer, Integer> currentRatings = new HashMap<>();
         for (Integer id : players.keySet()) {
             currentRatings.put(id, DATA.getRating(id));
-        }
-        for (GameChat gameChat : gameChats) {
-            if (gameChat.chatId == chatId) {
-                gameChat.setFree(true);
-                for (User user: gameChat.getGameData().getPlayers()) {
-                    kickPlayer(chatId, user);
-                }
-                for (User user: gameChat.getGameData().getSpectators()) {
-                    kickPlayer(chatId, user);
-                }
-            }
         }
         DATA.updateRatings(score, players);
         Map<Integer, Integer> updatedRatings = new HashMap<>();
@@ -297,7 +286,21 @@ public class SchedulerMain {
         for (GameResultEntry entry : entries) {
             builder.append(entry.name + " " + entry.points + " " + entry.rating + " (" + entry.delta + ")\n");
         }
-        bot.sendMessage(origChatId, "<b>Игра завершена.</b>\n" + builder.toString());
+        bot.sendMessage(origChatId, "<b>Игра завершена.</b>\nПакет: " + set.shortName + "\n" + builder.toString());
+    }
+
+    public void kickUsers(long chatId) {
+        for (GameChat gameChat : gameChats) {
+            if (gameChat.chatId == chatId) {
+                gameChat.setFree(true);
+                for (User user: gameChat.getGameData().getPlayers()) {
+                    kickPlayer(chatId, user);
+                }
+                for (User user: gameChat.getGameData().getSpectators()) {
+                    kickPlayer(chatId, user);
+                }
+            }
+        }
     }
 
     private static class GameResultEntry implements Comparable<GameResultEntry> {

@@ -136,15 +136,15 @@ public class Game implements Runnable {
         if (System.currentTimeMillis() >= actionExpires) {
             switch (state) {
             case AFTER_GAME:
-                endGame();
+                timer.cancel();
+                scheduler.kickUsers(chatId);
                 return;
             case BEFORE_GAME:
                 startGame();
                 return;
             case BEFORE_TOPIC:
                 if (topicId == stopAt) {
-                    state = State.AFTER_GAME;
-                    sendMessage("Игра окончена!", null, 30000);
+                    endGame();
                     return;
                 }
                 currentTopic = set.byIndex(topics.get(topicId));
@@ -253,8 +253,9 @@ public class Game implements Runnable {
     }
 
     private void endGame() {
-        timer.cancel();
-        scheduler.endGame(origChatId, chatId, score, users);
+        state = State.AFTER_GAME;
+        sendMessage("Игра окончена!", null, 300000);
+        scheduler.endGame(origChatId, set, score, users);
     }
 
     public void process(Message message) {
@@ -330,8 +331,7 @@ public class Game implements Runnable {
                 User user = message.getFrom();
                 if (command.equals("/abort")) {
                     showScore();
-                    state = State.AFTER_GAME;
-                    sendMessage("Игра окончена!", null, 30000);
+                    endGame();
                 } else if (command.equals("+") && state == State.QUESTION) {
                     if (answers.indexOf(user.getId()) != -1) {
                         return;
