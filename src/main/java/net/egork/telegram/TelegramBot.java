@@ -47,9 +47,15 @@ public abstract class TelegramBot {
         executor = Executors.newSingleThreadExecutor(r -> new Thread(r, "Executor for " + name));
         new Thread(() -> {
             try {
+                int delay = 100;
                 while (true) {
-                    Thread.sleep(100);
+                    Thread.sleep(delay);
                     List<Update> updates = getUpdates();
+                    if (updates == null) {
+                        delay = Math.min(2 * delay, 15000);
+                        continue;
+                    }
+                    delay = 100;
                     for (Update update : updates) {
                         if (update.getMessage() != null) {
                             executor.execute(() -> processMessage(update.getMessage()));
@@ -68,7 +74,7 @@ public abstract class TelegramBot {
         JsonNode result = apiRequest("getUpdates", args);
         if (result == null || !result.isArray()) {
             logger.error("update failed");
-            return Collections.emptyList();
+            return null;
         }
         return convertToList(result, Update.class);
     }
@@ -129,10 +135,12 @@ public abstract class TelegramBot {
         SendMessageArgs args = new SendMessageArgs(chatId, text, ParseMode.HTML, rkm);
 
         JsonNode result = apiRequest("sendMessage", args);
+        int backOff = 1000;
         while (result == null || !result.isObject()) {
             logger.error("message was not sent, retrying");
             try {
-                Thread.sleep(1000);
+                Thread.sleep(backOff);
+                backOff = Math.min(2 * backOff, 15000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
