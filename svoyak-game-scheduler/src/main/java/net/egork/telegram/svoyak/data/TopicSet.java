@@ -123,17 +123,17 @@ public class TopicSet {
         out.println(description);
         for (Topic topic : topics) {
             out.println();
-            out.println("Тема " + topic.topicName);
+            out.println("Тема " + topic.topicName.trim());
             for (int i = 0; i < 5; i++) {
                 Question question = topic.questions.get(i);
-                out.println(question.cost + ". " + question.question);
+                out.println(question.cost + ". " + question.question.trim());
                 boolean first = true;
                 for (String answer : question.answers) {
-                    out.println((first ? "Ответ: " : "Зачет: ") + answer);
+                    out.println((first ? "Ответ: " : "Зачет: ") + answer.trim());
                     first = false;
                 }
                 if (!question.comment.isEmpty()) {
-                    out.println("Комментарий: " + question.comment);
+                    out.println("Комментарий: " + question.comment.trim());
                 }
             }
         }
