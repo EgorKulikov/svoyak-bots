@@ -272,6 +272,13 @@ public class TopicSet {
         return null;
     }
 
+    private static String ridOf(String s, String sample) {
+        if (s.toLowerCase().contains(sample)) {
+            return s.substring(0, s.toLowerCase().indexOf(sample));
+        }
+        return s;
+    }
+
     private static Question parseQuestion(List<String> data, int cost, int realCost) {
         String question = "";
         for (String s : data) {
@@ -285,52 +292,39 @@ public class TopicSet {
         if (question.startsWith(".") || question.startsWith(":")) {
             question = question.substring(1).trim();
         }
-        if (question.toLowerCase().contains("источник:")) {
-            question = question.substring(0, question.toLowerCase().indexOf("источник:")).trim();
-        }
-        if (question.toLowerCase().contains("источник.")) {
-            question = question.substring(0, question.toLowerCase().indexOf("источник.")).trim();
-        }
-        if (question.toLowerCase().contains("запас.")) {
-            question = question.substring(0, question.toLowerCase().indexOf("запас.")).trim();
-        }
-        if (question.toLowerCase().contains("источник для всей темы:")) {
-            question = question.substring(0, question.toLowerCase().indexOf("источник для всей темы:")).trim();
-        }
-        if (question.toLowerCase().contains("источники:")) {
-            question = question.substring(0, question.toLowerCase().indexOf("источники:")).trim();
-        }
-        if (question.toLowerCase().contains("источники.")) {
-            question = question.substring(0, question.toLowerCase().indexOf("источники.")).trim();
-        }
-        String comment = "";
-        if (question.toLowerCase().contains("комментарий:")) {
-            int at = question.toLowerCase().indexOf("комментарий:");
-            comment += question.substring(at + 12).trim();
-            question = question.substring(0, at).trim();
-        }
-        if (question.toLowerCase().contains("комментарий.")) {
-            int at = question.toLowerCase().indexOf("комментарий.");
-            comment += question.substring(at + 12).trim();
-            question = question.substring(0, at).trim();
-        }
+        question = ridOf(question, "источник:");
+        question = ridOf(question, "источник.");
+        question = ridOf(question, "запас.");
+        question = ridOf(question, "источник для всей темы:");
+        question = ridOf(question, "источники:");
+        question = ridOf(question, "источники.");
+        question = ridOf(question, "\nист:");
+        question = ridOf(question, "\nист.");
+        question = ridOf(question, " ист:");
+        question = ridOf(question, " ист.");
+        Question result = new Question(realCost, "", new ArrayList<>(), "");
+        question = addComment(question, result, "комментарий:");
+        question = addComment(question, result, "комментарий.");
+        question = addComment(question, result, "\nком.");
+        question = addComment(question, result, " ком.");
+        question = addComment(question, result, "\nком:");
+        question = addComment(question, result, " ком:");
         while (question.toLowerCase().contains("незачет:") || question.toLowerCase().contains("незачёт:")) {
             int at = Math.max(question.toLowerCase().indexOf("незачет:"), question.toLowerCase().indexOf("незачёт:"));
-            comment += " Незачёт: " + question.substring(at + 8).trim();
+            result.comment += " Незачёт: " + question.substring(at + 8).trim();
             question = question.substring(0, at).trim();
         }
-        List<String> answers = new ArrayList<>();
         while (question.toLowerCase().contains("зачет:") || question.toLowerCase().contains("зачёт:")) {
             int at = Math.max(question.toLowerCase().lastIndexOf("зачет:"), question.toLowerCase().lastIndexOf("зачёт:"));
-            answers.add(question.substring(at + 6).trim());
+            result.answers.add(question.substring(at + 6).trim());
             question = question.substring(0, at).trim();
         }
         while (question.toLowerCase().contains("ответ:")) {
             int at = question.toLowerCase().lastIndexOf("ответ:");
-            answers.add(question.substring(at + 6).trim());
+            result.answers.add(question.substring(at + 6).trim());
             question = question.substring(0, at).trim();
         }
-        if (answers.isEmpty()) {
+        if (result.answers.isEmpty()) {
             int level = 0;
             int lastOpen = -1;
             int lastClose = -1;
@@ -350,14 +344,23 @@ public class TopicSet {
                 }
             }
             if (lastOpen != -1 && lastClose != -1) {
-                comment = question.substring(lastClose + 1) + comment;
-                answers.add(question.substring(lastOpen + 1, lastClose - 1));
+                result.comment = question.substring(lastClose + 1) + result.comment;
+                result.answers.add(question.substring(lastOpen + 1, lastClose - 1));
                 question = question.substring(0, lastOpen);
             }
         }
-        Collections.reverse(answers);
-        comment = comment.trim();
-        return new Question(realCost, question, answers, comment);
+        Collections.reverse(result.answers);
+        result.question = question;
+        return result;
+    }
+
+    private static String addComment(String question, Question result, String s) {
+        if (question.toLowerCase().contains(s)) {
+            int at = question.toLowerCase().indexOf(s);
+            result.comment += question.substring(at + s.length()).trim();
+            return question.substring(0, at);
+        }
+        return question;
     }
 
     public static void main(String[] args) {
