@@ -89,6 +89,7 @@ public class Game implements Runnable {
         this.topics = topics;
         for (User user : players) {
             users.put(user.getId(), getName(user));
+            add(user.getId(), 0);
         }
         executor.execute(new Runnable() {
             @Override
