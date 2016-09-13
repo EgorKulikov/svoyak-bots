@@ -355,6 +355,10 @@ public class TopicSet {
         }
         Collections.reverse(result.answers);
         result.question = question;
+        result.comment = result.comment.trim();
+        if (".".equals(result.comment)) {
+            result.comment = "";
+        }
         return result;
     }
 

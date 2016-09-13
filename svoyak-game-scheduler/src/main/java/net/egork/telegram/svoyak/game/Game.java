@@ -149,7 +149,7 @@ public class Game implements Runnable {
                 return;
             case BEFORE_TOPIC:
                 if (topicId == stopAt) {
-                    endGame();
+                    endGame(false);
                     return;
                 }
                 currentTopic = set.byIndex(topics.get(topicId));
@@ -257,11 +257,10 @@ public class Game implements Runnable {
         return score;
     }
 
-    private void endGame() {
-        boolean endBeforeStart = state == State.BEFORE_GAME || state == State.BEFORE_TOPIC && topicId == 0;
+    private void endGame(boolean aborted) {
         state = State.AFTER_GAME;
         sendMessage("Игра окончена!", null, 300000);
-        scheduler.endGame(origChatId, set, score, users, endBeforeStart);
+        scheduler.endGame(origChatId, set, score, users, aborted);
     }
 
     public void process(Message message) {
@@ -336,8 +335,7 @@ public class Game implements Runnable {
                 String command = tokens[0].toLowerCase();
                 User user = message.getFrom();
                 if (command.equals("/abort")) {
-                    showScore();
-                    endGame();
+                    endGame(true);
                 } else if (command.equals("+") && state == State.QUESTION) {
                     if (answers.indexOf(user.getId()) != -1) {
                         return;

@@ -267,8 +267,8 @@ public class SchedulerMain {
         return gameBot;
     }
 
-    public void endGame(long origChatId, TopicSet set, Map<Integer, Integer> score, Map<Integer, String> players, boolean endBeforeStart) {
-        if (endBeforeStart) {
+    public void endGame(long origChatId, TopicSet set, Map<Integer, Integer> score, Map<Integer, String> players, boolean aborted) {
+        if (aborted) {
             bot.sendMessage(origChatId, "<b>Игра завершена.</b>\nПакет: " + set.shortName + "\n" + "Игра отменена.");
             return;
         }
