@@ -345,8 +345,11 @@ public class TopicSet {
                 lastClose = question.length();
             }
             if (lastOpen != -1 && lastClose != -1) {
-                result.comment = question.substring(Math.min(lastClose + 1, question.length())) + result.comment;
-                result.answers.add(question.substring(lastOpen + 1, lastClose - 1));
+                String comment = question.substring(Math.min(lastClose + 1, question.length()));
+                if (!".".equals(comment)) {
+                    result.comment = comment + result.comment;
+                }
+                result.answers.add(question.substring(lastOpen + 1, lastClose));
                 question = question.substring(0, lastOpen);
             }
         }
