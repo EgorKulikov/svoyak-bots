@@ -63,7 +63,7 @@ public class ScheduleChat {
         String[] tokens = text.split(" ");
         String command = tokens[0].toLowerCase();
         String argument = tokens.length < 2 ? null : tokens[1];
-        if (command.endsWith("@SvoyakSchedulerBot")) {
+        if (command.endsWith("@SvoyakSchedulerBot".toLowerCase())) {
             command = command.substring(0, command.length() - "@SvoyakSchedulerBot".length());
         }
         switch (command) {
