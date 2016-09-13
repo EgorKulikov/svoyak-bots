@@ -330,7 +330,7 @@ public class SchedulerMain {
             if (!chat.isFree()) {
                 builder.append("\nИгра по пакету ").append(DATA.getSet(chat.getGameData().getSetId()).shortName);
                 builder.append("\nИгроки: ").append(Utils.userList(chat.getGameData().getPlayers()));
-                builder.append(chat.getGame().getStatus() == Game.State.AFTER_GAME ? "Игра окончена\n" :
+                builder.append(chat.getGame().getStatus() == Game.State.AFTER_GAME ? "\nИгра окончена\n" :
                         ("\nТема " + Math.min(chat.getGame().getCurrentTopic() + 1, chat.getGameData().
                         getTopicCount()) + "/" + chat.getGameData().getTopicCount() + "\n"));
             }
