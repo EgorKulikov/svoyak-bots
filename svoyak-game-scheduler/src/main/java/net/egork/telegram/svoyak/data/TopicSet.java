@@ -6,6 +6,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -302,12 +303,6 @@ public class TopicSet {
         if (question.toLowerCase().contains("источники.")) {
             question = question.substring(0, question.toLowerCase().indexOf("источники.")).trim();
         }
-        if (question.toLowerCase().contains("ист.")) {
-            question = question.substring(0, question.toLowerCase().indexOf("ист.")).trim();
-        }
-        if (question.toLowerCase().contains("ист:")) {
-            question = question.substring(0, question.toLowerCase().indexOf("ист:")).trim();
-        }
         String comment = "";
         if (question.toLowerCase().contains("комментарий:")) {
             int at = question.toLowerCase().indexOf("комментарий:");
@@ -316,16 +311,6 @@ public class TopicSet {
         }
         if (question.toLowerCase().contains("комментарий.")) {
             int at = question.toLowerCase().indexOf("комментарий.");
-            comment += question.substring(at + 12).trim();
-            question = question.substring(0, at).trim();
-        }
-        if (question.toLowerCase().contains("ком:")) {
-            int at = question.toLowerCase().indexOf("ком:");
-            comment += question.substring(at + 12).trim();
-            question = question.substring(0, at).trim();
-        }
-        if (question.toLowerCase().contains("ком.")) {
-            int at = question.toLowerCase().indexOf("ком.");
             comment += question.substring(at + 12).trim();
             question = question.substring(0, at).trim();
         }
@@ -373,6 +358,30 @@ public class TopicSet {
         Collections.reverse(answers);
         comment = comment.trim();
         return new Question(realCost, question, answers, comment);
+    }
+
+    public static void main(String[] args) {
+        TopicSet.parse(Arrays.asList(("Тема 8: ФРАНЦИЯ\n" +
+                "Автор: Александр Кудрявцев\n" +
+                "20. Название ЭТОГО единоборства происходит от французского слова, означающего \"старый ботинок\".\n" +
+                "Ответ: Сават.\n" +
+                "Источник: http://en.wikipedia.org/wiki/Savate\n" +
+                "40. После \"Рукопожатия в Монтуаре\", случившегося 24 октября 1940 года, патриоты и либералы стали презирать ЭТОГО прославленного военачальника.\n" +
+                "Ответ: (Анри Филиппа) Петена.\n" +
+                "Комментарий: Он пожал руку Гитлеру.\n" +
+                "Источник: http://www.vokrugsveta.ru/vs/article/7166/\n" +
+                "60. В 2011 году ОН дебютировал в качестве режиссёра, экранизировав собственный роман. Герой фильма, скрываясь под псевдонимом \"Фёдор Бельведер\", получает литературную премию, но теряет возлюбленную.\n" +
+                "Ответ: (Фредерик) Бегбедер.\n" +
+                "Комментарий: Фильм – \"Любовь живёт три года\", экранизация одноимённого романа.\n" +
+                "Источник: Фильм \"Любовь живёт три года\".\n" +
+                "80. Когда в 1878 году на заседании Французской академии состоялось демонстрация ЭТОГО заокеанского \"чуда\", профессор Жан Буйяр бросился на своего коллегу с криком: \"Вы думаете, мы позволим чревовещателю нас дурачить?!\".\n" +
+                "Ответ: Фонографа.\n" +
+                "Комментарий: Фонограф – первый прибор для воспроизведения звука, граммофон и патефон были изобретены позднее.\n" +
+                "Источник: Вокруг света, 2008, N3. – С. 31.\n" +
+                "100. ЭТОТ контр-адмирал Российского флота скончался в Париже в июле 1792 года. Депутация Национального собрания с почётом проводила героя в последний путь.\n" +
+                "Ответ: Джон Пол Джонс.\n" +
+                "Комментарий: Успел повоевать и на стороне Франции.\n" +
+                "Источник: Р. Белоусов. Тайны великих книг (Аудиокнига).\n").split("\n")));
     }
 
     private static TopicSet parseStandard(List<String> data) {
