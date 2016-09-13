@@ -60,8 +60,10 @@ public class SchedulerMain {
                 if (game != null) {
                     game.process(message);
                 }
+                return;
             }
         }
+        bot.sendMessage(message.getChat().getId(), "Для игры пройдите в официальный канал - https://telegram.me/joinchat/BNC7RD7LLZ1gSQlsQh1NPw");
     }
 
     private void loadProperties() {
@@ -119,7 +121,7 @@ public class SchedulerMain {
     private void processPrivateMessage(Message message) {
         if (!isAuthorized(message.getFrom())) {
             bot.sendMessage(message.getChat().getId(),
-                    "Вы не авторизованы добавлять новые пакеты. Обращайтесь к @Kroge");
+                    "Для игры пройдите в официальный канал - https://telegram.me/joinchat/BNC7RD7LLZ1gSQlsQh1NPw");
             return;
         }
         long chatId = message.getChat().getId();
