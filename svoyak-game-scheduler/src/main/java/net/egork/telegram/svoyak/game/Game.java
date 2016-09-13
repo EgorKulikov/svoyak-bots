@@ -257,9 +257,10 @@ public class Game implements Runnable {
     }
 
     private void endGame() {
+        boolean endBeforeStart = state == State.BEFORE_GAME || state == State.BEFORE_TOPIC && topicId == 0;
         state = State.AFTER_GAME;
         sendMessage("Игра окончена!", null, 300000);
-        scheduler.endGame(origChatId, set, score, users);
+        scheduler.endGame(origChatId, set, score, users, endBeforeStart);
     }
 
     public void process(Message message) {
