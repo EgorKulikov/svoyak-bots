@@ -63,7 +63,27 @@ public class ScheduleChat {
         String[] tokens = text.split(" ");
         String command = tokens[0].toLowerCase();
         String argument = tokens.length < 2 ? null : tokens[1];
+        if (command.endsWith("@SvoyakSchedulerBot")) {
+            command = command.substring(0, command.length() - "@SvoyakSchedulerBot".length());
+        }
         switch (command) {
+        case "/help":
+        case "помощь":
+            sendMessage("Бот для спортивной своей игры. Команды:\n" +
+                        "/game или игра - создает новую игру\n" +
+                        "/set или пакет - задает пакет на которм будет идти игра\n" +
+                        "/topics или темы - устанавливает число тем\n" +
+                        "/minplayers или минигроков - устанавливает минимальное число игроков\n" +
+                        "/maxplayers или максигроков - устанавливает максимальное число игроков\n" +
+                        "/register, регистрация или + - регистриует на текщую игру и создает игру, если она не начата\n" +
+                        "/spectator или зритель - регистрирует на текущую игру зрителем\n" +
+                        "/unregister или отмена - отменяет регистрацию\n" +
+                        "/start или старт - стартует текущую игру\n" +
+                        "/abort - отменяет текущую игру\n" +
+                        "/status или статус - выводит список идущих игр\n" +
+                        "/rating или рейтинг - выводит таблицу ретинга\n"
+            );
+            break;
         case "/game":
         case "игра":
             if (currentGame == null) {
@@ -122,6 +142,7 @@ public class ScheduleChat {
             break;
         case "/register":
         case "регистрация":
+        case "+":
             if (currentGame == null) {
                 createGame();
             }

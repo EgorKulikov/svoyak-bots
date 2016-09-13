@@ -287,6 +287,9 @@ public class TopicSet {
         if (question.toLowerCase().contains("источник:")) {
             question = question.substring(0, question.toLowerCase().indexOf("источник:")).trim();
         }
+        if (question.toLowerCase().contains("источник.")) {
+            question = question.substring(0, question.toLowerCase().indexOf("источник.")).trim();
+        }
         if (question.toLowerCase().contains("запас.")) {
             question = question.substring(0, question.toLowerCase().indexOf("запас.")).trim();
         }
@@ -296,12 +299,33 @@ public class TopicSet {
         if (question.toLowerCase().contains("источники:")) {
             question = question.substring(0, question.toLowerCase().indexOf("источники:")).trim();
         }
-        if (question.toLowerCase().contains("ист.:")) {
-            question = question.substring(0, question.toLowerCase().indexOf("ист.:")).trim();
+        if (question.toLowerCase().contains("источники.")) {
+            question = question.substring(0, question.toLowerCase().indexOf("источники.")).trim();
+        }
+        if (question.toLowerCase().contains("ист.")) {
+            question = question.substring(0, question.toLowerCase().indexOf("ист.")).trim();
+        }
+        if (question.toLowerCase().contains("ист:")) {
+            question = question.substring(0, question.toLowerCase().indexOf("ист:")).trim();
         }
         String comment = "";
         if (question.toLowerCase().contains("комментарий:")) {
             int at = question.toLowerCase().indexOf("комментарий:");
+            comment += question.substring(at + 12).trim();
+            question = question.substring(0, at).trim();
+        }
+        if (question.toLowerCase().contains("комментарий.")) {
+            int at = question.toLowerCase().indexOf("комментарий.");
+            comment += question.substring(at + 12).trim();
+            question = question.substring(0, at).trim();
+        }
+        if (question.toLowerCase().contains("ком:")) {
+            int at = question.toLowerCase().indexOf("ком:");
+            comment += question.substring(at + 12).trim();
+            question = question.substring(0, at).trim();
+        }
+        if (question.toLowerCase().contains("ком.")) {
+            int at = question.toLowerCase().indexOf("ком.");
             comment += question.substring(at + 12).trim();
             question = question.substring(0, at).trim();
         }
@@ -324,6 +348,7 @@ public class TopicSet {
         if (answers.isEmpty()) {
             int level = 0;
             int lastOpen = -1;
+            int lastClose = -1;
             for (int i = 0; i < question.length(); i++) {
                 char c = question.charAt(i);
                 if (c == '(') {
@@ -334,13 +359,14 @@ public class TopicSet {
                 }
                 if (c == ')') {
                     level--;
+                    if (level == 0) {
+                        lastClose = i;
+                    }
                 }
             }
-            if (lastOpen != -1) {
-                if (question.charAt(question.length() - 1) == '.') {
-                    question = question.substring(0, question.length() - 1);
-                }
-                answers.add(question.substring(lastOpen + 1, question.length() - 1));
+            if (lastOpen != -1 && lastClose != -1) {
+                comment = question.substring(lastClose + 1) + comment;
+                answers.add(question.substring(lastOpen + 1, lastClose - 1));
                 question = question.substring(0, lastOpen);
             }
         }

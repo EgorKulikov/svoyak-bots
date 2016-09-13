@@ -36,7 +36,11 @@ public class Game implements Runnable {
         return topicId;
     }
 
-    private enum State {
+    public State getStatus() {
+        return state;
+    }
+
+    public enum State {
         BEFORE_TOPIC,
         BEFORE_FIRST_QUESTION,
         QUESTION,
@@ -263,7 +267,7 @@ public class Game implements Runnable {
             @Override
             public void run() {
                 if (state == State.AFTER_GAME) {
-                    actionExpires = Math.max(actionExpires, System.currentTimeMillis() + 15000);
+                    actionExpires = Math.max(actionExpires, System.currentTimeMillis() + 60000);
                     return;
                 }
                 String text = message.getText();
