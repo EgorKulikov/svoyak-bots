@@ -250,6 +250,7 @@ public class Data {
             if (entry.rating != lastRating) {
                 place += sinceLast;
                 lastRating = entry.rating;
+                sinceLast = 0;
             }
             if (place > top) {
                 break;
