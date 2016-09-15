@@ -15,6 +15,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,10 +29,16 @@ import java.util.concurrent.Executors;
  * @author egor@egork.net
  */
 public abstract class TelegramBot {
+    public static final int MAX_BACKOFF = 5000;
     private final String apiUri;
-    private final HttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(
-            RequestConfig.custom().setConnectTimeout(1000).setConnectionRequestTimeout(1000).build()
-    ).build();
+    private HttpClient client = createClient();
+
+    private CloseableHttpClient createClient() {
+        return HttpClientBuilder.create().setDefaultRequestConfig(
+                RequestConfig.custom().setConnectTimeout(1000).setConnectionRequestTimeout(1000).build()
+        ).build();
+    }
+
     private final ObjectMapper mapper = new ObjectMapper()
                 .registerModules(new KotlinModule())
                 .setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES)
@@ -50,9 +57,12 @@ public abstract class TelegramBot {
                 int delay = 100;
                 while (true) {
                     Thread.sleep(delay);
+                    if (delay == MAX_BACKOFF) {
+                        client = createClient();
+                    }
                     List<Update> updates = getUpdates();
                     if (updates == null) {
-                        delay = Math.min(2 * delay, 15000);
+                        delay = Math.min(2 * delay, MAX_BACKOFF);
                         continue;
                     }
                     delay = 100;
@@ -136,11 +146,19 @@ public abstract class TelegramBot {
 
         JsonNode result = apiRequest("sendMessage", args);
         int backOff = 1000;
+        int tries = 0;
         while (result == null || !result.isObject()) {
             logger.error("message was not sent, retrying");
+            tries++;
+            if (tries == 20) {
+                return null;
+            }
+            if (backOff == MAX_BACKOFF) {
+                client = createClient();
+            }
             try {
                 Thread.sleep(backOff);
-                backOff = Math.min(2 * backOff, 15000);
+                backOff = Math.min(2 * backOff, MAX_BACKOFF);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
