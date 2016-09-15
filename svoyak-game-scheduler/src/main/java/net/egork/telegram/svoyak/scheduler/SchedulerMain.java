@@ -96,6 +96,15 @@ public class SchedulerMain {
                 if (message.getNewChatMember() != null) {
                     kickIfNeeded(chat, message.getNewChatMember());
                 }
+                User from = message.getFrom();
+                if (from != null) {
+                    if (from.getUsername() != null && (from.getUsername().equals("SvoyakPlayBot") || from.getUsername().equals("SvoyakSchedulerBot"))) {
+                        return;
+                    }
+                    if (chat.isFree() || (!chat.getGameData().getPlayers().contains(from) && !chat.getGameData().getSpectators().contains(from))) {
+                        bot.kickPlayer(chatId, from.getId());
+                    }
+                }
                 return;
             }
         }
