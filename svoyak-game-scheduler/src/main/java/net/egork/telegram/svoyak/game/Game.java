@@ -259,6 +259,7 @@ public class Game implements Runnable {
 
     private void endGame(boolean aborted) {
         state = State.AFTER_GAME;
+        paused = false;
         sendMessage("Игра окончена!", null, 300000);
         scheduler.endGame(origChatId, set, score, users, aborted);
     }
@@ -449,7 +450,7 @@ public class Game implements Runnable {
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    if (!paused) {
+                    if (!paused && state != State.AFTER_GAME) {
                         actionExpires = System.currentTimeMillis() + delay;
                     }
                 }
