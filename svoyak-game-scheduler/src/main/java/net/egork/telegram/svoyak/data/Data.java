@@ -98,6 +98,7 @@ public class Data {
                 played.put(userId, set);
             }
             reader.close();
+            saveUserFriendlyPlayed();
         } catch (IOException ignored) {
         }
     }
@@ -192,6 +193,32 @@ public class Data {
 
     public void commitPlayed() {
         savePlayed();
+        saveUserFriendlyPlayed();
+    }
+
+    private void saveUserFriendlyPlayed() {
+        try {
+            PrintWriter out = new PrintWriter("played.txt");
+            for (Map.Entry<Integer, Set<TopicId>> entry : played.entrySet()) {
+                out.println(players.get(entry.getKey()));
+                Map<String, char[]> sets = new HashMap<>();
+                for (TopicId topicId : entry.getValue()) {
+                    if (!sets.containsKey(topicId.setId)) {
+                        char[] value = new char[this.sets.get(topicId.setId).topics.size()];
+                        Arrays.fill(value, '.');
+                        sets.put(topicId.setId, value);
+                    }
+                    sets.get(topicId.setId)[topicId.topic - 1] = 'X';
+                }
+                for (Map.Entry<String, char[]> stringEntry : sets.entrySet()) {
+                    out.println(stringEntry.getKey());
+                    out.println(new String(stringEntry.getValue()));
+                }
+                out.println();
+            }
+            out.close();
+        } catch (Exception ignored) {
+        }
     }
 
     public List<String> getActive() {
