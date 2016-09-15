@@ -81,7 +81,8 @@ public class ScheduleChat {
                         "/start или старт - стартует текущую игру\n" +
                         "/abort - отменяет текущую игру\n" +
                         "/status или статус - выводит список идущих игр\n" +
-                        "/rating или рейтинг - выводит таблицу ретинга\n"
+                        "/rating или рейтинг - выводит таблицу ретинга\n" +
+                        "/block - блокирует пакет. Пожалуйста, используйте только если вы ранее играли этот пакет. Отменить действие будет невозможно."
             );
             break;
         case "/game":
@@ -205,8 +206,21 @@ public class ScheduleChat {
             break;
         case "/rating":
         case "рейтинг":
-            sendMessage("<b>Рейтинг игроков:</b>\n" + DATA.getRatingList());
+            int top;
+            if (argument == null || !Utils.isNumber(argument, 1, 1000)) {
+                top = 20;
+            } else {
+                top = Integer.parseInt(argument);
+            }
+            sendMessage("<b>Рейтинг игроков:</b>\n" + DATA.getRatingList(top));
             break;
+        case "/block":
+            if (argument == null || DATA.getSet(argument) == null) {
+                sendMessage("Неизвестный пакет - " + argument);
+            } else {
+                DATA.blockSet(message.getFrom().getId(), argument);
+                sendMessage("Пакет " + argument + " заблокирован для пользователя " + Utils.name(message.getFrom()));
+            }
         default:
             break;
         }

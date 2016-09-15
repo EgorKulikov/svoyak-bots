@@ -236,17 +236,37 @@ public class Data {
         savePlayers();
     }
 
-    public String getRatingList() {
+    public String getRatingList(int top) {
         List<RatingEntry> list = new ArrayList<>();
         for (Map.Entry<Integer, String> entry : players.entrySet()) {
             list.add(new RatingEntry(entry.getValue(), rating.get(entry.getKey())));
         }
         Collections.sort(list);
         StringBuilder builder = new StringBuilder();
+        int place = 1;
+        int sinceLast = 0;
+        int lastRating = 1000000;
         for (RatingEntry entry : list) {
-            builder.append(entry.name + " " + entry.rating + "\n");
+            if (entry.rating != lastRating) {
+                place += sinceLast;
+                lastRating = entry.rating;
+            }
+            if (place > top) {
+                break;
+            }
+            builder.append(place + ". " + entry.name + " " + entry.rating + "\n");
+            sinceLast++;
         }
         return builder.toString();
+    }
+
+    public void blockSet(int userId, String set) {
+        int numTopics = getSet(set).topics.size();
+        for (int i = 1; i <= numTopics; i++) {
+            TopicId id = new TopicId(set, i);
+            addPlayed(userId, id);
+        }
+        commitPlayed();
     }
 
     private static class RatingEntry implements Comparable<RatingEntry> {
