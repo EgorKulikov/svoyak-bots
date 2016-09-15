@@ -450,7 +450,7 @@ public class Game implements Runnable {
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    if (!paused && state != State.AFTER_GAME) {
+                    if (!paused) {
                         actionExpires = System.currentTimeMillis() + delay;
                     }
                 }
