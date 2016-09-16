@@ -24,7 +24,7 @@ public class SchedulerMain {
     private TelegramBot bot;
     private TelegramBot gameBot;
     private GameChat[] gameChats = {
-            new GameChat(-168357638L, "https://telegram.me/joinchat/DskhTQncINfKx_WvGXaf2Q"),
+            new GameChat(-168357638L, "https://telegram.me/joinchat/DskhTQoI7wbPkJDnCEwh5A"),
             new GameChat(-158229596L, "https://telegram.me/joinchat/DskhTQluZFzfv0-HZl4lzg"),
             new GameChat(-153565904L, "https://telegram.me/joinchat/DskhTQknOtDStaSM-7IdRg"),
             new GameChat(-171488976L, "https://telegram.me/joinchat/DskhTQo4ttAnVADN4N1qug"),
