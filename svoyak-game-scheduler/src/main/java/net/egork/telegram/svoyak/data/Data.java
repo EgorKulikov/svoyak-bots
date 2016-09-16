@@ -203,12 +203,17 @@ public class Data {
                 out.println(players.get(entry.getKey()));
                 Map<String, char[]> sets = new HashMap<>();
                 for (TopicId topicId : entry.getValue()) {
+                    if (!this.sets.containsKey(topicId.setId)) {
+                        continue;
+                    }
                     if (!sets.containsKey(topicId.setId)) {
                         char[] value = new char[this.sets.get(topicId.setId).topics.size()];
                         Arrays.fill(value, '.');
                         sets.put(topicId.setId, value);
                     }
-                    sets.get(topicId.setId)[topicId.topic - 1] = 'X';
+                    if (topicId.topic > 0 && topicId.topic <= sets.get(topicId.setId).length) {
+                        sets.get(topicId.setId)[topicId.topic - 1] = 'X';
+                    }
                 }
                 for (Map.Entry<String, char[]> stringEntry : sets.entrySet()) {
                     out.println(stringEntry.getKey());
