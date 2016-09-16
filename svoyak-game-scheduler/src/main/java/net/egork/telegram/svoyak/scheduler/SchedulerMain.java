@@ -24,10 +24,16 @@ public class SchedulerMain {
     private TelegramBot bot;
     private TelegramBot gameBot;
     private GameChat[] gameChats = {
-            new GameChat(-165421271L, "https://telegram.me/joinchat/DskhTQncINfKx_WvGXaf2Q"),
+            new GameChat(-168357638L, "https://telegram.me/joinchat/DskhTQncINfKx_WvGXaf2Q"),
             new GameChat(-158229596L, "https://telegram.me/joinchat/DskhTQluZFzfv0-HZl4lzg"),
             new GameChat(-153565904L, "https://telegram.me/joinchat/DskhTQknOtDStaSM-7IdRg"),
             new GameChat(-171488976L, "https://telegram.me/joinchat/DskhTQo4ttAnVADN4N1qug"),
+            new GameChat(-161277865L, "https://telegram.me/joinchat/DskhTQmc56krZ-dAzABAKg"),
+            new GameChat(-133600742L, "https://telegram.me/joinchat/DskhTQf2leb1ZcwdpfoDjA"),
+            new GameChat(-175626233L, "https://telegram.me/joinchat/DskhTQp31_mwpywmyEapLA"),
+            new GameChat(-154086751L, "https://telegram.me/joinchat/DskhTQkvLV8izpzS5xnNPA"),
+            new GameChat(-171107176L, "https://telegram.me/joinchat/DskhTQoy42jf_90PBMJFog"),
+            new GameChat(-154677332L, "https://telegram.me/joinchat/DskhTQk4MFSq-NoT-hV_Aw"),
     };
 
     private Executor executor = Executors.newSingleThreadExecutor();

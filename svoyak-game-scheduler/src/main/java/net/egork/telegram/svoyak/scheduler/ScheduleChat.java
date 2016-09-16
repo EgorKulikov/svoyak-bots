@@ -225,5 +225,4 @@ public class ScheduleChat {
             break;
         }
     }
-
 }
