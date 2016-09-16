@@ -63,7 +63,8 @@ public class SchedulerMain {
                 return;
             }
         }
-        bot.sendMessage(message.getChat().getId(), "Для игры пройдите в официальный канал - https://telegram.me/joinchat/BNC7RD7LLZ1gSQlsQh1NPw");
+        gameBot.sendMessage(message.getChat().getId(), "Для игры пройдите в официальный канал - https://telegram.me/joinchat/BNC7RD7LLZ1gSQlsQh1NPw");
+        System.err.println(message.getChat().getId());
     }
 
     private void loadProperties() {
