@@ -302,6 +302,15 @@ public class Data {
         commitPlayed();
     }
 
+    public void ratingDiscount() {
+        for (int id : rating.keySet()) {
+            int current = rating.get(id);
+            current = 1500 + (current - 1500) * 9 / 10;
+            rating.put(id, current);
+        }
+        savePlayers();
+    }
+
     private static class RatingEntry implements Comparable<RatingEntry> {
         public final String name;
         public final int rating;

@@ -212,6 +212,10 @@ public class SchedulerMain {
                     bot.sendMessage(chatId, list.toString());
                 }
                 break;
+            case "/weeklyreset":
+                DATA.ratingDiscount();
+                bot.sendMessage(chatId, "Рейтинг дисконтирован");
+                break;
             default:
                 bot.sendMessage(chatId, "Неизвестная команда - " + command);
                 break;
