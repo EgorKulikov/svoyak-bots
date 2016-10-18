@@ -155,6 +155,7 @@ public class Game implements Runnable {
                         actionExpires = System.currentTimeMillis() + FIRST_QUESTION;
                     }
                 });
+                state = State.QUESTION;
                 return;
             case AFTER_GAME:
                 timer.cancel();
@@ -202,6 +203,7 @@ public class Game implements Runnable {
                 state = State.AFTER_QUESTION;
                 break;
             case ANSWER:
+                editMessage(getQuestionText());
                 sendMessage("Время вышло, " + getName(current), PLUS, SUCCESSIVE_QUESTION);
                 state = State.QUESTION;
                 answers.add(current.getId());
@@ -341,6 +343,7 @@ public class Game implements Runnable {
                         actionExpires = Long.MAX_VALUE;
                         sendMessage("Ответ принят: " + text + ".\nРешение судьи?", YES_NO);
                     } else if (currentQuestion.checkAnswer(text)) {
+                        editMessage(getQuestionText());
                         sendMessage("Это правильный ответ, " + getName(message.getFrom()) + "\n" +
                                 "<b>Авторский ответ</b>: " + currentQuestion.authorAnswers(), BREAK, INTERMISSION);
                         answers.add(current.getId());
