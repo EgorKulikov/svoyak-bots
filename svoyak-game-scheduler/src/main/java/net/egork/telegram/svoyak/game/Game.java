@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 /**
  * @author egor@egork.net
@@ -43,6 +44,7 @@ public class Game implements Runnable {
     public enum State {
         BEFORE_TOPIC,
         BEFORE_FIRST_QUESTION,
+        BEFORE_QUESTION,
         QUESTION,
         ANSWER,
         AFTER_QUESTION,
@@ -78,6 +80,7 @@ public class Game implements Runnable {
     private volatile Executor executor = Executors.newSingleThreadExecutor();
 
     private Timer timer;
+    private int lastQuestionId;
 
     public Game(SchedulerMain scheduler, long originalChatId, long chatId, TopicSet set, List<Integer> topics,
             List<User> players) {
@@ -136,10 +139,23 @@ public class Game implements Runnable {
         scheduler.getGameBot().sendMessage(chatId, text, keyboard, new CallBack(delay));
     }
 
+    private void editMessage(String text) {
+        scheduler.getGameBot().editMessage(chatId, lastQuestionId, text);
+    }
+
     @Override
     public void run() {
         if (System.currentTimeMillis() >= actionExpires) {
             switch (state) {
+            case BEFORE_QUESTION:
+                actionExpires = Long.MAX_VALUE;
+                scheduler.getGameBot().sendMessage(chatId, getQuestionText(), EMPTY, id -> {
+                    lastQuestionId = id;
+                    if (!paused) {
+                        actionExpires = System.currentTimeMillis() + FIRST_QUESTION;
+                    }
+                });
+                return;
             case AFTER_GAME:
                 timer.cancel();
                 scheduler.kickUsers(chatId);
@@ -195,10 +211,17 @@ public class Game implements Runnable {
         }
     }
 
+    @NotNull
+    private String getQuestionText() {
+        return "<b>Тема</b> " + currentTopic.topicName + "\n<b>" +
+                currentQuestion.cost + ".</b> " + currentQuestion.question;
+    }
+
     private void askQuestion() {
-        sendMessage("<b>Тема</b> " + currentTopic.topicName + "\n<b>" +
-                currentQuestion.cost + ".</b> " + currentQuestion.question, PLUS, FIRST_QUESTION);
-        state = State.QUESTION;
+//        sendMessage("<b>Тема</b> " + currentTopic.topicName + "\n<b>" +
+//                currentQuestion.cost + ".</b> " + currentQuestion.question, PLUS, FIRST_QUESTION);
+        sendMessage("Внимание, вопрос", PLUS, 1000);
+        state = State.BEFORE_QUESTION;
         answers = new ArrayList<>();
         correct = 0;
     }
@@ -326,6 +349,7 @@ public class Game implements Runnable {
                         state = State.AFTER_QUESTION;
                     } else {
                         sendMessage("Это неправильный ответ, " + getName(message.getFrom()), PLUS, SUCCESSIVE_QUESTION);
+                        editMessage(getQuestionText());
                         answers.add(current.getId());
                         current = null;
                         state = State.QUESTION;
@@ -347,6 +371,8 @@ public class Game implements Runnable {
                     users.put(user.getId(), getName(user));
                     current = user;
                     sendMessage("Ваш ответ, " + getName(user) + "?", null, ANSWER);
+                    editMessage("<b>Тема</b> " + currentTopic.topicName + "\n<b>" + currentQuestion.cost + ".</b> " +
+                            "Вопрос скрыт");
                     state = State.ANSWER;
                 } else if ((command.equals("/pause") || command.equals("пауза")) && state != State.QUESTION && state
                         != State.ANSWER && !paused) {
@@ -438,7 +464,7 @@ public class Game implements Runnable {
         score.put(user, score.get(user) + cost);
     }
 
-    private class CallBack implements Runnable {
+    private class CallBack implements Consumer<Integer> {
         private long delay;
 
         public CallBack(long delay) {
@@ -446,7 +472,7 @@ public class Game implements Runnable {
         }
 
         @Override
-        public void run() {
+        public void accept(Integer id) {
             executor.execute(new Runnable() {
                 @Override
                 public void run() {

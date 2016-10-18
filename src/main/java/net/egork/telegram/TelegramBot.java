@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 /**
  * @author egor@egork.net
@@ -115,6 +116,7 @@ public abstract class TelegramBot {
             }
             JsonNode tree = mapper.readTree(response.getEntity().getContent());
             if (!tree.get("ok").asBoolean()) {
+                logger.error(method + ": " + tree);
                 return null;
             }
             return tree.get("result");
@@ -184,7 +186,7 @@ public abstract class TelegramBot {
         sendMessage(chatId, text, keyboard, null);
     }
 
-    public void sendMessage(long chatId, String text, Runnable callback) {
+    public void sendMessage(long chatId, String text, Consumer<Integer> callback) {
         sendMessage(chatId, text, null, callback);
     }
 
@@ -193,11 +195,11 @@ public abstract class TelegramBot {
     }
 
 
-    public void sendMessage(long chatId, String text, String[] keyboard, Runnable callback) {
+    public void sendMessage(long chatId, String text, String[] keyboard, Consumer<Integer> callback) {
         executor.execute(() -> sendMessageImpl(chatId, text, keyboard, callback));
     }
 
-    private void sendMessageImpl(long chatId, String text, String[] keyboard, Runnable callback) {
+    private void sendMessageImpl(long chatId, String text, String[] keyboard, Consumer<Integer> callback) {
         if (text.length() > 4096) {
             int at = text.substring(0, 4096).lastIndexOf('\n');
             if (at == -1) {
@@ -224,12 +226,12 @@ public abstract class TelegramBot {
             }, nextTimeSlot.get(chatId) - System.currentTimeMillis() + 100);
             return;
         }
-        sendMessageImpl(chatId, text, keyboard != null && keyboard.length != 0 ? new ReplyKeyboardMarkup(
-                new String[][]{keyboard}, null, true, null) :
-                new ReplyKeyboardHide(true, null));
-        nextTimeSlot.put(chatId, System.currentTimeMillis() + 3000);
+        Message message = sendMessageImpl(chatId, text, keyboard != null && keyboard.length != 0 ?
+                new ReplyKeyboardMarkup(new String[][]{keyboard}, null, true, null) :
+                (keyboard == null ? new ReplyKeyboardHide(true, null) : null));
+        nextTimeSlot.put(chatId, System.currentTimeMillis() + 1000);
         if (callback != null) {
-            callback.run();
+            callback.accept(message == null ? 0 : message.getMessageId());
         }
     }
 
@@ -241,4 +243,11 @@ public abstract class TelegramBot {
     }
 
     protected abstract void processMessage(Message message);
+
+    public void editMessage(long chatId, int messageId, String text) {
+        executor.execute(() -> {
+            EditMessageArgs args = new EditMessageArgs(chatId, messageId, text, ParseMode.HTML);
+            apiRequest("editMessageText", args);
+        });
+    }
 }

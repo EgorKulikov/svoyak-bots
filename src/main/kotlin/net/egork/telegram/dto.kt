@@ -123,3 +123,5 @@ data class SendMessageArgs(val chatId: Long, val text: String, val parseMode: Pa
                            val replyMarkup: Any?)
 
 data class KickArgs(val chatId: Long, val userId: Int)
+
+data class EditMessageArgs(val chatId: Long, val messageId: Int, val text: String, val parseMode: ParseMode?)
