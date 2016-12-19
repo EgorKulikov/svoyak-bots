@@ -279,6 +279,9 @@ public class Data {
         int sinceLast = 0;
         int lastRating = 1000000;
         for (RatingEntry entry : list) {
+            if (entry.rating == 1500) {
+                continue;
+            }
             if (entry.rating != lastRating) {
                 place += sinceLast;
                 lastRating = entry.rating;

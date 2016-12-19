@@ -213,7 +213,7 @@ public class TopicSet {
     }
 
     private static Topic parse(List<String> data) {
-        for (int multiplier = 1; multiplier <= 100; multiplier++) {
+        for (int multiplier = 1; multiplier <= 400; multiplier++) {
             int current = 1;
             for (String s : data) {
                 String prefix = Integer.toString(multiplier * current);

@@ -155,9 +155,7 @@ public abstract class TelegramBot {
             if (tries == 20) {
                 return null;
             }
-            if (backOff == MAX_BACKOFF) {
-                client = createClient();
-            }
+            client = createClient();
             try {
                 Thread.sleep(backOff);
                 backOff = Math.min(2 * backOff, MAX_BACKOFF);
