@@ -198,15 +198,6 @@ public abstract class TelegramBot {
     }
 
     private void sendMessageImpl(long chatId, String text, String[] keyboard, Consumer<Integer> callback) {
-        if (text.length() > 4096) {
-            int at = text.substring(0, 4096).lastIndexOf('\n');
-            if (at == -1) {
-                at = 4096;
-            }
-            sendMessageImpl(chatId, text.substring(0, at), keyboard, null);
-            sendMessageImpl(chatId, text.substring(at), keyboard, callback);
-            return;
-        }
         if (!nextTimeSlot.containsKey(chatId)) {
             nextTimeSlot.put(chatId, 0L);
         }
@@ -214,14 +205,18 @@ public abstract class TelegramBot {
             new Timer().schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    executor.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            sendMessageImpl(chatId, text, keyboard, callback);
-                        }
-                    });
+                    executor.execute(() -> sendMessageImpl(chatId, text, keyboard, callback));
                 }
             }, nextTimeSlot.get(chatId) - System.currentTimeMillis() + 100);
+            return;
+        }
+        if (text.length() > 4096) {
+            int at = text.substring(0, 4096).lastIndexOf('\n');
+            if (at == -1) {
+                at = 4096;
+            }
+            sendMessageImpl(chatId, text.substring(0, at), keyboard, null);
+            sendMessageImpl(chatId, text.substring(at), keyboard, callback);
             return;
         }
         Message message = sendMessageImpl(chatId, text, keyboard != null && keyboard.length != 0 ?
