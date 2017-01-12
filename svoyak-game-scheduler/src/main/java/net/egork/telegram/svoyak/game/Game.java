@@ -286,8 +286,8 @@ public class Game implements Runnable {
         state = State.AFTER_GAME;
         paused = false;
         sendMessage("Игра окончена!", null, 3000);
-        sendMessage("Через 5 минут бот удалит всех игроков из этой комнаты.\n" +
-                    "Пожалуйста, не выходите самостоятельно!", null, 300000);
+        sendMessage("Вскоре бот удалит всех игроков из этой комнаты.\n" +
+                    "Пожалуйста, не выходите самостоятельно!", null, 60000);
         scheduler.endGame(origChatId, set, score, users, aborted);
     }
 

@@ -10,7 +10,6 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -32,7 +31,7 @@ import java.util.function.Consumer;
 public abstract class TelegramBot {
     public static final int MAX_BACKOFF = 5000;
     private final String apiUri;
-    private HttpClient client = createClient();
+    private CloseableHttpClient client = createClient();
 
     private CloseableHttpClient createClient() {
         return HttpClientBuilder.create().setDefaultRequestConfig(
@@ -59,6 +58,11 @@ public abstract class TelegramBot {
                 while (true) {
                     Thread.sleep(delay);
                     if (delay == MAX_BACKOFF) {
+                        try {
+                            client.close();
+                        } catch (IOException e) {
+                            logger.catching(e);
+                        }
                         client = createClient();
                     }
                     List<Update> updates = getUpdates();
@@ -154,6 +158,11 @@ public abstract class TelegramBot {
             tries++;
             if (tries == 20) {
                 return null;
+            }
+            try {
+                client.close();
+            } catch (IOException e) {
+                logger.catching(e);
             }
             client = createClient();
             try {
