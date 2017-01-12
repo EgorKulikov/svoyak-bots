@@ -35,7 +35,7 @@ public abstract class TelegramBot {
 
     private CloseableHttpClient createClient() {
         return HttpClientBuilder.create().setDefaultRequestConfig(
-                RequestConfig.custom().setConnectTimeout(1000).setConnectionRequestTimeout(1000).build()
+                RequestConfig.custom().setConnectTimeout(5000).setConnectionRequestTimeout(5000).build()
         ).build();
     }
 
