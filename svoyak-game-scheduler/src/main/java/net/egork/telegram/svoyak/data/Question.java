@@ -33,14 +33,23 @@ public class Question {
     public boolean checkAnswer(String answer) {
         answer = answer.trim().toLowerCase();
         for (String expected : answers) {
-            if (noSpace(expected).toLowerCase().equals(noSpace(answer))) {
+            if (noSpace(expected, false).toLowerCase().equals(noSpace(answer, true))) {
+                return true;
+            }
+            if (noSpace(expected, true).toLowerCase().equals(noSpace(answer, true))) {
+                return true;
+            }
+            if (noSpace(expected, false).toLowerCase().equals(noSpace(answer, false))) {
+                return true;
+            }
+            if (noSpace(expected, true).toLowerCase().equals(noSpace(answer, false))) {
                 return true;
             }
         }
         return false;
     }
 
-    private String noSpace(String answer) {
+    private String noSpace(String answer, boolean skipParenthesis) {
         StringBuilder builder = new StringBuilder();
         int parentheses = 0;
         for (int i = 0; i < answer.length(); i++) {
@@ -49,7 +58,7 @@ public class Question {
                 parentheses++;
             } else if (c == ')' || c == ']' || c == '}') {
                 parentheses--;
-            } else if (parentheses == 0 && Character.isLetterOrDigit(c)) {
+            } else if ((parentheses == 0 || !skipParenthesis) && Character.isLetterOrDigit(c)) {
                 if (c == 'ё' || c == 'Ё') {
                     c = 'е';
                 }

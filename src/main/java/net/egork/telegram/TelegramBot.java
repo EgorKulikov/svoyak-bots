@@ -55,9 +55,11 @@ public abstract class TelegramBot {
         new Thread(() -> {
             try {
                 int delay = 100;
+                int tries = 0;
                 while (true) {
+                    tries++;
                     Thread.sleep(delay);
-                    if (delay == MAX_BACKOFF) {
+                    if (tries % 10 == 0) {
                         try {
                             client.close();
                         } catch (IOException e) {
@@ -70,6 +72,7 @@ public abstract class TelegramBot {
                         delay = Math.min(2 * delay, MAX_BACKOFF);
                         continue;
                     }
+                    tries = 0;
                     delay = 100;
                     for (Update update : updates) {
                         if (update.getMessage() != null) {
