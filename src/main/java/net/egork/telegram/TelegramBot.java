@@ -67,7 +67,13 @@ public abstract class TelegramBot {
                         }
                         client = createClient();
                     }
-                    List<Update> updates = getUpdates();
+                    List<Update> updates;
+                    try {
+                        updates = getUpdates();
+                    } catch (Throwable e) {
+                        logger.error(e);
+                        continue;
+                    }
                     if (updates == null) {
                         delay = Math.min(2 * delay, MAX_BACKOFF);
                         continue;
