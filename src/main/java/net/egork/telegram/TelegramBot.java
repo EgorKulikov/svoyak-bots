@@ -1,21 +1,5 @@
 package net.egork.telegram;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.module.kotlin.KotlinModule;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.ContentType;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.telegram.telegrambots.api.methods.GetFile;
@@ -32,7 +16,6 @@ import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -42,22 +25,7 @@ import java.util.function.Consumer;
  * @author egor@egork.net
  */
 public abstract class TelegramBot extends TelegramLongPollingBot {
-    public static final int MAX_BACKOFF = 5000;
-    private final String apiUri;
-    private CloseableHttpClient client = createClient();
 
-    private CloseableHttpClient createClient() {
-        return HttpClientBuilder.create().setDefaultRequestConfig(
-                RequestConfig.custom().setConnectTimeout(2000).setConnectionRequestTimeout(2000).build()
-        ).build();
-    }
-
-    private final ObjectMapper mapper = new ObjectMapper()
-                .registerModules(new KotlinModule())
-                .setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES)
-                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private Integer offset;
     private Logger logger = LogManager.getLogger(TelegramBot.class);
     private final Map<Long, Long> nextTimeSlot = new HashMap<>();
     private final String token;
@@ -65,47 +33,9 @@ public abstract class TelegramBot extends TelegramLongPollingBot {
     private final String name;
 
     public TelegramBot(String token, String name) {
-        apiUri = "https://api.telegram.org/bot" + token + "/";
         this.token = token;
         executor = Executors.newSingleThreadExecutor(r -> new Thread(r, "Executor for " + name));
         this.name = name;
-    }
-
-    private <T>List<T> convertToList(JsonNode result, Class<T> aClass) {
-        List<T> list = new ArrayList<T>();
-        result.forEach(x -> {
-            try {
-                list.add(mapper.treeToValue(x, aClass));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException();
-            }
-        });
-        return list;
-    }
-
-    private JsonNode apiRequest(String method, Object args) {
-        try {
-            byte[] dataBytes = mapper.writeValueAsBytes(args);
-
-            HttpPost request = new HttpPost(apiUri + method);
-            request.setEntity(new ByteArrayEntity(dataBytes, ContentType.APPLICATION_JSON));
-
-            HttpResponse response = client.execute(request);
-            int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode != HttpStatus.SC_OK) {
-                return null;
-            }
-            JsonNode tree = mapper.readTree(response.getEntity().getContent());
-            if (!tree.get("ok").asBoolean()) {
-                logger.error(method + ": " + tree);
-                return null;
-            }
-            return tree.get("result");
-        } catch (JsonProcessingException | ClientProtocolException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            return null;
-        }
     }
 
     public File getFile(String fileId) {
