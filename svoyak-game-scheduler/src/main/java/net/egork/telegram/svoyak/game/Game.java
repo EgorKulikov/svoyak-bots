@@ -7,7 +7,6 @@ import net.egork.telegram.svoyak.data.TopicSet;
 import net.egork.telegram.svoyak.scheduler.SchedulerMain;
 import org.jetbrains.annotations.NotNull;
 import org.telegram.telegrambots.api.objects.Message;
-import org.telegram.telegrambots.api.objects.User;
 
 import java.util.*;
 import java.util.concurrent.Executor;
