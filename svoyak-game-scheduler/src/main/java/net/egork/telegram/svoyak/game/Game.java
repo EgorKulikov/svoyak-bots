@@ -69,12 +69,12 @@ public class Game implements Runnable {
 
     private long actionExpires;
     private State state;
-    private User current;
+    private net.egork.telegram.svoyak.data.User current;
 
     private long origChatId;
     private long chatId;
     private SchedulerMain scheduler;
-    private final List<User> players;
+    private final List<net.egork.telegram.svoyak.data.User> players;
     private List<Integer> topics;
 
     private volatile Executor executor = Executors.newSingleThreadExecutor();
@@ -83,14 +83,14 @@ public class Game implements Runnable {
     private int lastQuestionId;
 
     public Game(SchedulerMain scheduler, long originalChatId, long chatId, TopicSet set, List<Integer> topics,
-            List<User> players) {
+            List<net.egork.telegram.svoyak.data.User> players) {
         this.scheduler = scheduler;
         this.players = players;
         this.tournamentGame = false;
         origChatId = originalChatId;
         this.chatId = chatId;
         this.topics = topics;
-        for (User user : players) {
+        for (net.egork.telegram.svoyak.data.User user : players) {
             users.put(user.getId(), getName(user));
             add(user.getId(), 0);
         }
@@ -312,7 +312,7 @@ public class Game implements Runnable {
                         judgeId = message.getFrom().getId();
                         sendMessage("Судья зарегестрирован", null);
                     } else if (text.equals("регистрация")) {
-                        users.put(message.getFrom().getId(), getName(message.getFrom()));
+                        users.put(message.getFrom().getId(), getName(new net.egork.telegram.svoyak.data.User(message.getFrom())));
                         score.put(message.getFrom().getId(), 0);
                         sendMessage("Игрок зарегестрирован", null);
                     } else if (text.equals("старт") && message.getFrom().getId() == judgeId) {
@@ -346,14 +346,14 @@ public class Game implements Runnable {
                         sendMessage("Ответ принят: " + text + ".\nРешение судьи?", YES_NO);
                     } else if (currentQuestion.checkAnswer(text)) {
                         editMessage(getQuestionText());
-                        sendMessage("Это правильный ответ, " + getName(message.getFrom()) + "\n" +
+                        sendMessage("Это правильный ответ, " + getName(new net.egork.telegram.svoyak.data.User(message.getFrom())) + "\n" +
                                 "<b>Авторский ответ</b>: " + currentQuestion.authorAnswers(), BREAK, INTERMISSION);
                         answers.add(current.getId());
                         correct = current.getId();
                         current = null;
                         state = State.AFTER_QUESTION;
                     } else {
-                        sendMessage("Это неправильный ответ, " + getName(message.getFrom()), PLUS, SUCCESSIVE_QUESTION);
+                        sendMessage("Это неправильный ответ, " + getName(new net.egork.telegram.svoyak.data.User(message.getFrom())), PLUS, SUCCESSIVE_QUESTION);
                         editMessage(getQuestionText());
                         answers.add(current.getId());
                         current = null;
@@ -363,7 +363,7 @@ public class Game implements Runnable {
                 }
                 String[] tokens = text.split(" ");
                 String command = tokens[0].toLowerCase();
-                User user = message.getFrom();
+                net.egork.telegram.svoyak.data.User user = new net.egork.telegram.svoyak.data.User(message.getFrom());
                 if (command.equals("/abort")) {
                     endGame(true);
                 } else if (command.equals("+") && state == State.QUESTION) {
@@ -448,7 +448,7 @@ public class Game implements Runnable {
     }
 
     @NotNull
-    private String getName(User user) {
+    private String getName(net.egork.telegram.svoyak.data.User user) {
         return Utils.name(user);
     }
 

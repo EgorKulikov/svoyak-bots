@@ -255,7 +255,7 @@ public class SchedulerMain {
             for (int i = 1; i <= topicSet.topics.size(); i++) {
                 TopicId topicId = new TopicId(setId, i);
                 boolean good = true;
-                for (User user : currentGame.getPlayers()) {
+                for (net.egork.telegram.svoyak.data.User user : currentGame.getPlayers()) {
                     Set<TopicId> set = DATA.getPlayed(user.getId());
                     if (set != null && set.contains(topicId)) {
                         good = false;
@@ -273,10 +273,10 @@ public class SchedulerMain {
             }
             for (int topic : topics) {
                 TopicId topicId = new TopicId(setId, topic + 1);
-                for (User user : currentGame.getPlayers()) {
+                for (net.egork.telegram.svoyak.data.User user : currentGame.getPlayers()) {
                     DATA.addPlayed(user.getId(), topicId);
                 }
-                for (User user : currentGame.getSpectators()) {
+                for (net.egork.telegram.svoyak.data.User user : currentGame.getSpectators()) {
                     DATA.addPlayed(user.getId(), topicId);
                 }
             }
@@ -331,11 +331,11 @@ public class SchedulerMain {
         for (GameChat gameChat : gameChats) {
             if (gameChat.chatId == chatId) {
                 gameChat.setFree(true);
-                for (User user : gameChat.getGameData().getPlayers()) {
-                    kickPlayer(chatId, user);
+                for (net.egork.telegram.svoyak.data.User user : gameChat.getGameData().getPlayers()) {
+                    kickPlayer(chatId, user.getUser());
                 }
-                for (User user : gameChat.getGameData().getSpectators()) {
-                    kickPlayer(chatId, user);
+                for (net.egork.telegram.svoyak.data.User user : gameChat.getGameData().getSpectators()) {
+                    kickPlayer(chatId, user.getUser());
                 }
             }
         }

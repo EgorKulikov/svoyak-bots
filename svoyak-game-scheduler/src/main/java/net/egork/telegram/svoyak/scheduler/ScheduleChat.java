@@ -1,6 +1,7 @@
 package net.egork.telegram.svoyak.scheduler;
 
 import net.egork.telegram.svoyak.Utils;
+import net.egork.telegram.svoyak.data.User;
 import org.telegram.telegrambots.api.objects.Message;
 
 import java.util.List;
@@ -153,7 +154,7 @@ public class ScheduleChat {
             if (currentGame.getPlayers().size() == currentGame.getMaxPlayers()) {
                 sendMessage("Все места заняты");
             } else {
-                currentGame.addPlayer(message.getFrom());
+                currentGame.addPlayer(new User(message.getFrom()));
                 sendMessage(currentGame.toString());
             }
             break;
@@ -162,7 +163,7 @@ public class ScheduleChat {
             if (currentGame == null) {
                 sendMessage("Игра не начата");
             } else {
-                currentGame.addSpectator(message.getFrom());
+                currentGame.addSpectator(new User(message.getFrom()));
                 sendMessage(currentGame.toString());
             }
             break;
@@ -172,7 +173,7 @@ public class ScheduleChat {
             if (currentGame == null) {
                 sendMessage("Игра не начата");
             } else {
-                currentGame.unregister(message.getFrom());
+                currentGame.unregister(new User(message.getFrom()));
                 sendMessage(currentGame.toString());
             }
             break;
@@ -220,7 +221,7 @@ public class ScheduleChat {
                 sendMessage("Неизвестный пакет - " + argument);
             } else {
                 DATA.blockSet(message.getFrom().getId(), argument);
-                sendMessage("Пакет " + argument + " заблокирован для пользователя " + Utils.name(message.getFrom()));
+                sendMessage("Пакет " + argument + " заблокирован для пользователя " + Utils.name(new User(message.getFrom())));
             }
         default:
             break;

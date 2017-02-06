@@ -1,7 +1,6 @@
 package net.egork.telegram.svoyak.scheduler;
 
 import net.egork.telegram.svoyak.Utils;
-import org.telegram.telegrambots.api.objects.User;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,8 +14,8 @@ public class GameData {
     private int topicCount = 6;
     private int minPlayers = 3;
     private int maxPlayers = 4;
-    private List<User> players = new ArrayList<>();
-    private List<User> spectators = new ArrayList<>();
+    private List<net.egork.telegram.svoyak.data.User> players = new ArrayList<>();
+    private List<net.egork.telegram.svoyak.data.User> spectators = new ArrayList<>();
     private long lastUpdated = System.currentTimeMillis();
 
     public GameData() {
@@ -59,27 +58,27 @@ public class GameData {
         lastUpdated = System.currentTimeMillis();
     }
 
-    public List<User> getPlayers() {
+    public List<net.egork.telegram.svoyak.data.User> getPlayers() {
         return Collections.unmodifiableList(players);
     }
 
-    public void addPlayer(User user) {
+    public void addPlayer(net.egork.telegram.svoyak.data.User user) {
         unregister(user);
         players.add(user);
         lastUpdated = System.currentTimeMillis();
     }
 
-    public void addSpectator(User user) {
+    public void addSpectator(net.egork.telegram.svoyak.data.User user) {
         unregister(user);
         spectators.add(user);
         lastUpdated = System.currentTimeMillis();
     }
 
-    public List<User> getSpectators() {
+    public List<net.egork.telegram.svoyak.data.User> getSpectators() {
         return Collections.unmodifiableList(spectators);
     }
 
-    public void unregister(User user) {
+    public void unregister(net.egork.telegram.svoyak.data.User user) {
         spectators.remove(user);
         players.remove(user);
         lastUpdated = System.currentTimeMillis();
