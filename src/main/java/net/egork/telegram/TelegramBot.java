@@ -18,6 +18,19 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.telegram.telegrambots.api.methods.GetFile;
+import org.telegram.telegrambots.api.methods.ParseMode;
+import org.telegram.telegrambots.api.methods.groupadministration.GetChatMember;
+import org.telegram.telegrambots.api.methods.groupadministration.KickChatMember;
+import org.telegram.telegrambots.api.methods.send.SendMessage;
+import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.api.objects.*;
+import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboard;
+import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardRemove;
+import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 import java.io.IOException;
 import java.util.*;
@@ -28,7 +41,7 @@ import java.util.function.Consumer;
 /**
  * @author egor@egork.net
  */
-public abstract class TelegramBot {
+public abstract class TelegramBot extends TelegramLongPollingBot {
     public static final int MAX_BACKOFF = 5000;
     private final String apiUri;
     private CloseableHttpClient client = createClient();
@@ -47,60 +60,15 @@ public abstract class TelegramBot {
     private Integer offset;
     private Logger logger = LogManager.getLogger(TelegramBot.class);
     private final Map<Long, Long> nextTimeSlot = new HashMap<>();
+    private final String token;
     private Executor executor;
+    private final String name;
 
     public TelegramBot(String token, String name) {
         apiUri = "https://api.telegram.org/bot" + token + "/";
+        this.token = token;
         executor = Executors.newSingleThreadExecutor(r -> new Thread(r, "Executor for " + name));
-        new Thread(() -> {
-            try {
-                int delay = 100;
-                int tries = 0;
-                while (true) {
-                    tries++;
-                    Thread.sleep(delay);
-                    if (tries % 10 == 0) {
-                        try {
-                            client.close();
-                        } catch (IOException e) {
-                            logger.catching(e);
-                        }
-                        client = createClient();
-                    }
-                    List<Update> updates;
-                    try {
-                        updates = getUpdates();
-                    } catch (Throwable e) {
-                        logger.error(e);
-                        continue;
-                    }
-                    if (updates == null) {
-                        delay = Math.min(2 * delay, MAX_BACKOFF);
-                        continue;
-                    }
-                    tries = 0;
-                    delay = 100;
-                    for (Update update : updates) {
-                        if (update.getMessage() != null) {
-                            executor.execute(() -> processMessage(update.getMessage()));
-                        }
-                        offset = update.getUpdateId() + 1;
-                    }
-                }
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }, "Telegram bot " + name).start();
-    }
-
-    private List<Update> getUpdates() {
-        GetUpdatesArgs args = new GetUpdatesArgs(offset, null, null);
-        JsonNode result = apiRequest("getUpdates", args);
-        if (result == null || !result.isArray()) {
-            logger.error("update failed");
-            return null;
-        }
-        return convertToList(result, Update.class);
+        this.name = name;
     }
 
     private <T>List<T> convertToList(JsonNode result, Class<T> aClass) {
@@ -141,63 +109,29 @@ public abstract class TelegramBot {
     }
 
     public File getFile(String fileId) {
-        GetFileArgs args = new GetFileArgs(fileId);
-
-        JsonNode result = apiRequest("getFile", args);
-        if (result == null || !result.isObject()) {
-            logger.error("no file returned");
-            return null;
-        }
         try {
-            return mapper.treeToValue(result, File.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            GetFile args = new GetFile();
+            args.setFileId(fileId);
+            return getFile(args);
+        } catch (TelegramApiException e) {
+            logger.error(e);
+            return null;
         }
     }
 
-    private Message sendMessageImpl(long chatId, String text, Object rkm) {
-        long time = System.currentTimeMillis();
-        SendMessageArgs args = new SendMessageArgs(chatId, text, ParseMode.HTML, rkm);
-
-        JsonNode result = apiRequest("sendMessage", args);
-        int backOff = 1000;
-        int tries = 0;
-        while (result == null || !result.isObject()) {
-            logger.error("message was not sent, retrying");
-            tries++;
-            if (tries == 20) {
-                return null;
-            }
-            if (tries % 5 == 0) {
-                try {
-                    client.close();
-                } catch (IOException e) {
-                    logger.catching(e);
-                }
-            }
-            client = createClient();
+    private Message sendMessageImpl(long chatId, String text, ReplyKeyboard rkm) {
+        SendMessage args = new SendMessage();
+        args.setChatId(chatId);
+        args.setText(text);
+        args.setParseMode(ParseMode.HTML);
+        args.setReplyMarkup(rkm);
+        while (true) {
             try {
-                Thread.sleep(backOff);
-                backOff = Math.min(2 * backOff, MAX_BACKOFF);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                return sendMessage(args);
+            } catch (TelegramApiException e) {
+                logger.error(e);
             }
-            result = apiRequest("sendMessage", args);
         }
-
-        Message message;
-
-        try {
-            message = mapper.treeToValue(result, Message.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-        long elapsed = System.currentTimeMillis() - time;
-        if (elapsed >= 2000) {
-            logger.debug("Message %s took %.2f to send", text, elapsed / 1000d);
-        }
-        return message;
     }
 
     public void sendMessage(long chatId, String text, String[] keyboard) {
@@ -239,9 +173,20 @@ public abstract class TelegramBot {
             sendMessageImpl(chatId, text.substring(at), keyboard, callback);
             return;
         }
-        Message message = sendMessageImpl(chatId, text, keyboard != null && keyboard.length != 0 ?
-                new ReplyKeyboardMarkup(new String[][]{keyboard}, null, true, null) :
-                (keyboard == null ? new ReplyKeyboardHide(true, null) : null));
+        ReplyKeyboard markup;
+        if (keyboard == null) {
+            markup = new ReplyKeyboardRemove();
+        } else if (keyboard.length != 0) {
+            markup = new ReplyKeyboardMarkup();
+            KeyboardRow row = new KeyboardRow();
+            for (String button : keyboard) {
+                row.add(button);
+            }
+            ((ReplyKeyboardMarkup)markup).setKeyboard(Collections.singletonList(row));
+        } else {
+            markup = null;
+        }
+        Message message = sendMessageImpl(chatId, text, markup);
         nextTimeSlot.put(chatId, System.currentTimeMillis() + 1000);
         if (callback != null) {
             callback.accept(message == null ? 0 : message.getMessageId());
@@ -250,8 +195,20 @@ public abstract class TelegramBot {
 
     public void kickPlayer(long chatId, int userId) {
         executor.execute(() -> {
-            KickArgs args = new KickArgs(chatId, userId);
-            apiRequest("kickChatMember", args);
+            try {
+                GetChatMember args = new GetChatMember();
+                args.setChatId(chatId);
+                args.setUserId(userId);
+                ChatMember chatMember = getChatMember(args);
+                if (chatMember.getStatus().equals(MemberStatus.MEMBER)) {
+                    KickChatMember member = new KickChatMember();
+                    member.setChatId(chatId);
+                    member.setUserId(userId);
+                    kickMember(member);
+                }
+            } catch (TelegramApiException e) {
+                logger.error(e);
+            }
         });
     }
 
@@ -259,8 +216,31 @@ public abstract class TelegramBot {
 
     public void editMessage(long chatId, int messageId, String text) {
         executor.execute(() -> {
-            EditMessageArgs args = new EditMessageArgs(chatId, messageId, text, ParseMode.HTML);
-            apiRequest("editMessageText", args);
+            try {
+                EditMessageText args = new EditMessageText();
+                args.setChatId(chatId);
+                args.setMessageId(messageId);
+                args.setText(text);
+                args.setParseMode(ParseMode.HTML);
+                editMessageText(args);
+            } catch (TelegramApiException e) {
+                logger.error(e);
+            }
         });
+    }
+
+    @Override
+    public String getBotToken() {
+        return token;
+    }
+
+    @Override
+    public void onUpdateReceived(Update update) {
+        executor.execute(() -> processMessage(update.getMessage()));
+    }
+
+    @Override
+    public String getBotUsername() {
+        return name;
     }
 }

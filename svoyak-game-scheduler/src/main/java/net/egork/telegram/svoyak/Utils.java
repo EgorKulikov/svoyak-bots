@@ -1,6 +1,6 @@
 package net.egork.telegram.svoyak;
 
-import net.egork.telegram.User;
+import org.telegram.telegrambots.api.objects.User;
 
 import java.util.List;
 

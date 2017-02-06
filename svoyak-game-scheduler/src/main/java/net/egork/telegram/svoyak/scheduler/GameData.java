@@ -1,7 +1,7 @@
 package net.egork.telegram.svoyak.scheduler;
 
-import net.egork.telegram.User;
 import net.egork.telegram.svoyak.Utils;
+import org.telegram.telegrambots.api.objects.User;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -1,11 +1,15 @@
 package net.egork.telegram.svoyak.scheduler;
 
-import net.egork.telegram.*;
+import net.egork.telegram.TelegramBot;
 import net.egork.telegram.svoyak.Utils;
 import net.egork.telegram.svoyak.data.Topic;
 import net.egork.telegram.svoyak.data.TopicSet;
 import net.egork.telegram.svoyak.game.Game;
 import org.jetbrains.annotations.NotNull;
+import org.telegram.telegrambots.ApiContextInitializer;
+import org.telegram.telegrambots.TelegramBotsApi;
+import org.telegram.telegrambots.api.objects.*;
+import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,12 +19,13 @@ import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import static net.egork.telegram.svoyak.data.Data.*;
+import static net.egork.telegram.svoyak.data.Data.DATA;
 
 /**
  * @author egor@egork.net
  */
 public class SchedulerMain {
+    private static TelegramBotsApi botsApi;
     private TelegramBot bot;
     private TelegramBot gameBot;
     private GameChat[] gameChats = {
@@ -40,23 +45,31 @@ public class SchedulerMain {
     private Map<Long, ScheduleChat> chats = new HashMap<>();
 
     public static void main(String[] args) {
+        ApiContextInitializer.init();
+        botsApi = new TelegramBotsApi();
         new SchedulerMain().run();
     }
 
     private void run() {
         loadProperties();
-        bot = new TelegramBot(System.getProperty("scheduler.token"), "Scheduler") {
+        bot = new TelegramBot(System.getProperty("scheduler.token"), "SvoyakSchedulerBot") {
             @Override
             protected void processMessage(Message message) {
                 executor.execute(() -> SchedulerMain.this.processMessage(message));
             }
         };
-        gameBot = new TelegramBot(System.getProperty("play.token"), "Play") {
+        gameBot = new TelegramBot(System.getProperty("play.token"), "SvoyakPlayBot") {
             @Override
             protected void processMessage(Message message) {
                 executor.execute(() -> processPlayMessage(message));
             }
         };
+        try {
+            botsApi.registerBot(bot);
+            botsApi.registerBot(gameBot);
+        } catch (TelegramApiRequestException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void processPlayMessage(Message message) {
@@ -81,7 +94,7 @@ public class SchedulerMain {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        for (Enumeration propertyName = properties.propertyNames(); propertyName.hasMoreElements();) {
+        for (Enumeration propertyName = properties.propertyNames(); propertyName.hasMoreElements(); ) {
             String key = (String) propertyName.nextElement();
             System.getProperties().put(key, properties.getProperty(key));
         }
@@ -89,7 +102,7 @@ public class SchedulerMain {
 
     private void processMessage(Message message) {
         Chat chat = message.getChat();
-        if (chat.getType() == ChatType.PRIVATE) {
+        if (chat.isUserChat()) {
             processPrivateMessage(message);
         } else {
             processGroupMessage(message);
@@ -105,7 +118,7 @@ public class SchedulerMain {
                 }
                 User from = message.getFrom();
                 if (from != null) {
-                    if (from.getUsername() != null && (from.getUsername().equals("SvoyakPlayBot") || from.getUsername().equals("SvoyakSchedulerBot"))) {
+                    if (from.getUserName() != null && (from.getUserName().equals("SvoyakPlayBot") || from.getUserName().equals("SvoyakSchedulerBot"))) {
                         return;
                     }
                     if (chat.isFree() || (!chat.getGameData().getPlayers().contains(from) && !chat.getGameData().getSpectators().contains(from))) {
@@ -124,8 +137,7 @@ public class SchedulerMain {
 
     private void kickIfNeeded(GameChat chat, User user) {
         if (chat.isFree() || (!chat.getGameData().getPlayers().contains(user) &&
-                !chat.getGameData().getSpectators().contains(user)))
-        {
+                !chat.getGameData().getSpectators().contains(user))) {
             kickPlayer(chat.chatId, user);
         }
     }
@@ -176,55 +188,55 @@ public class SchedulerMain {
             String command = tokens[0].toLowerCase();
             String set = tokens.length < 2 ? null : tokens[1];
             switch (command) {
-            case "/activate":
-            case "включить":
-                if (set == null || DATA.getSet(set) == null) {
-                    bot.sendMessage(chatId, "Неизвестный пакет - " + set);
-                } else if (DATA.isActive(set)) {
-                    bot.sendMessage(chatId, "Пакет уже включен");
-                } else {
-                    DATA.enableSet(set);
-                    bot.sendMessage(chatId, "Пакет включен - " + set);
-                }
-                break;
-            case "/deactivate":
-            case "выключить":
-                if (set == null || DATA.getSet(set) == null) {
-                    bot.sendMessage(chatId, "Неизвестный пакет - " + set);
-                } else if (!DATA.isActive(set)) {
-                    bot.sendMessage(chatId, "Пакет уже выключен");
-                } else {
-                    DATA.disableSet(set);
-                    bot.sendMessage(chatId, "Пакет выключен - " + set);
-                }
-                break;
-            case "/alltopics":
-            case "темы":
-                if (set == null || DATA.getSet(set) == null) {
-                    bot.sendMessage(chatId, "Неизвестный пакет - " + set);
-                } else {
-                    TopicSet topicSet = DATA.getSet(set);
-                    StringBuilder list = new StringBuilder();
-                    list.append("Список тем:\n");
-                    for (int i = 0; i < topicSet.topics.size(); i++) {
-                        list.append((i + 1)).append(". ").append(topicSet.byIndex(i).topicName).append("\n");
+                case "/activate":
+                case "включить":
+                    if (set == null || DATA.getSet(set) == null) {
+                        bot.sendMessage(chatId, "Неизвестный пакет - " + set);
+                    } else if (DATA.isActive(set)) {
+                        bot.sendMessage(chatId, "Пакет уже включен");
+                    } else {
+                        DATA.enableSet(set);
+                        bot.sendMessage(chatId, "Пакет включен - " + set);
                     }
-                    bot.sendMessage(chatId, list.toString());
-                }
-                break;
-            case "/weeklyreset":
-                DATA.ratingDiscount();
-                bot.sendMessage(chatId, "Рейтинг дисконтирован");
-                break;
-            default:
-                bot.sendMessage(chatId, "Неизвестная команда - " + command);
-                break;
+                    break;
+                case "/deactivate":
+                case "выключить":
+                    if (set == null || DATA.getSet(set) == null) {
+                        bot.sendMessage(chatId, "Неизвестный пакет - " + set);
+                    } else if (!DATA.isActive(set)) {
+                        bot.sendMessage(chatId, "Пакет уже выключен");
+                    } else {
+                        DATA.disableSet(set);
+                        bot.sendMessage(chatId, "Пакет выключен - " + set);
+                    }
+                    break;
+                case "/alltopics":
+                case "темы":
+                    if (set == null || DATA.getSet(set) == null) {
+                        bot.sendMessage(chatId, "Неизвестный пакет - " + set);
+                    } else {
+                        TopicSet topicSet = DATA.getSet(set);
+                        StringBuilder list = new StringBuilder();
+                        list.append("Список тем:\n");
+                        for (int i = 0; i < topicSet.topics.size(); i++) {
+                            list.append((i + 1)).append(". ").append(topicSet.byIndex(i).topicName).append("\n");
+                        }
+                        bot.sendMessage(chatId, list.toString());
+                    }
+                    break;
+                case "/weeklyreset":
+                    DATA.ratingDiscount();
+                    bot.sendMessage(chatId, "Рейтинг дисконтирован");
+                    break;
+                default:
+                    bot.sendMessage(chatId, "Неизвестная команда - " + command);
+                    break;
             }
         }
     }
 
     private boolean isAuthorized(User from) {
-        return "Kroge".equals(from.getUsername());
+        return "Kroge".equals(from.getUserName());
     }
 
     public TelegramBot getBot() {
@@ -319,10 +331,10 @@ public class SchedulerMain {
         for (GameChat gameChat : gameChats) {
             if (gameChat.chatId == chatId) {
                 gameChat.setFree(true);
-                for (User user: gameChat.getGameData().getPlayers()) {
+                for (User user : gameChat.getGameData().getPlayers()) {
                     kickPlayer(chatId, user);
                 }
-                for (User user: gameChat.getGameData().getSpectators()) {
+                for (User user : gameChat.getGameData().getSpectators()) {
                     kickPlayer(chatId, user);
                 }
             }
@@ -356,7 +368,7 @@ public class SchedulerMain {
                 builder.append("\nИгроки: ").append(Utils.userList(chat.getGameData().getPlayers()));
                 builder.append(chat.getGame().getStatus() == Game.State.AFTER_GAME ? "\nИгра окончена\n" :
                         ("\nТема " + Math.min(chat.getGame().getCurrentTopic() + 1, chat.getGameData().
-                        getTopicCount()) + "/" + chat.getGameData().getTopicCount() + "\n"));
+                                getTopicCount()) + "/" + chat.getGameData().getTopicCount() + "\n"));
             }
         }
         return builder.toString();

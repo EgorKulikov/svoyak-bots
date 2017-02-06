@@ -1,13 +1,13 @@
 package net.egork.telegram.svoyak.game;
 
-import net.egork.telegram.Message;
-import net.egork.telegram.User;
 import net.egork.telegram.svoyak.Utils;
 import net.egork.telegram.svoyak.data.Question;
 import net.egork.telegram.svoyak.data.Topic;
 import net.egork.telegram.svoyak.data.TopicSet;
 import net.egork.telegram.svoyak.scheduler.SchedulerMain;
 import org.jetbrains.annotations.NotNull;
+import org.telegram.telegrambots.api.objects.Message;
+import org.telegram.telegrambots.api.objects.User;
 
 import java.util.*;
 import java.util.concurrent.Executor;
