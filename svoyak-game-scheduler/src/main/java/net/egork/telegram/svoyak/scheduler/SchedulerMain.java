@@ -2,13 +2,13 @@ package net.egork.telegram.svoyak.scheduler;
 
 import net.egork.telegram.TelegramBot;
 import net.egork.telegram.svoyak.Utils;
-import net.egork.telegram.svoyak.data.Topic;
-import net.egork.telegram.svoyak.data.TopicSet;
+import net.egork.telegram.svoyak.data.*;
 import net.egork.telegram.svoyak.game.Game;
 import org.jetbrains.annotations.NotNull;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.objects.*;
+import org.telegram.telegrambots.api.objects.User;
 import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
 
 import java.io.BufferedReader;
@@ -121,7 +121,7 @@ public class SchedulerMain {
                     if (from.getUserName() != null && (from.getUserName().equals("SvoyakPlayBot") || from.getUserName().equals("SvoyakSchedulerBot"))) {
                         return;
                     }
-                    if (chat.isFree() || (!chat.getGameData().getPlayers().contains(from) && !chat.getGameData().getSpectators().contains(from))) {
+                    if (chat.isFree() || (!chat.getGameData().getPlayers().contains(new net.egork.telegram.svoyak.data.User(from)) && !chat.getGameData().getSpectators().contains(new net.egork.telegram.svoyak.data.User(from)))) {
                         bot.kickPlayer(chatId, from.getId());
                     }
                 }
@@ -136,8 +136,8 @@ public class SchedulerMain {
     }
 
     private void kickIfNeeded(GameChat chat, User user) {
-        if (chat.isFree() || (!chat.getGameData().getPlayers().contains(user) &&
-                !chat.getGameData().getSpectators().contains(user))) {
+        if (chat.isFree() || (!chat.getGameData().getPlayers().contains(new net.egork.telegram.svoyak.data.User(user)) &&
+                !chat.getGameData().getSpectators().contains(new net.egork.telegram.svoyak.data.User(user)))) {
             kickPlayer(chat.chatId, user);
         }
     }
