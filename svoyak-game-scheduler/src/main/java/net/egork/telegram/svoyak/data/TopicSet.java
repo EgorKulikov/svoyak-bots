@@ -2,6 +2,9 @@ package net.egork.telegram.svoyak.data;
 
 //import org.apache.commons.lang.StringEscapeUtils;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -231,11 +234,7 @@ public class TopicSet {
                     if (s.startsWith(prefix + " ") || s.startsWith(prefix + ".") || s.startsWith(prefix + ":")) {
                         Question q = parseQuestion(data.subList(i, last), multiplier * current, 10 * current);
                         if (q.answers.isEmpty()) {
-                            for (String ss : data) {
-                                System.err.println(ss);
-                            }
-                            System.err.println();
-                            return null;
+                            return tryParseAfter(data, multiplier);
                         }
                         questions.add(q);
                         last = i;
@@ -243,33 +242,92 @@ public class TopicSet {
                     }
                 }
                 Collections.reverse(questions);
-                String name = "";
-                for (int i = 0; i < last; i++) {
-                    if (!name.isEmpty()) {
-                        name += "\n";
-                    }
-                    name += data.get(i);
-                }
-                name = name.trim();
-                if (name.toLowerCase().startsWith("тема")) {
-                    name = name.substring(4).trim();
-                }
-                while (!name.isEmpty() && Character.isDigit(name.charAt(0))) {
-                    name = name.substring(1).trim();
-                }
-                if (name.startsWith(".") || name.startsWith(":")) {
-                    name = name.substring(1).trim();
-                }
+                String name = getTopicName(data, last);
                 return new Topic(name, questions);
             }
         }
         if (data.size() >= 5) {
-            for (String ss : data) {
-                System.err.println(ss);
-            }
-            System.err.println();
+            cantParse(data);
         }
         return null;
+    }
+
+    @NotNull
+    private static String getTopicName(List<String> data, int last) {
+        String name = "";
+        for (int i = 0; i < last; i++) {
+            if (!name.isEmpty()) {
+                name += "\n";
+            }
+            name += data.get(i);
+        }
+        name = name.trim();
+        if (name.toLowerCase().startsWith("тема")) {
+            name = name.substring(4).trim();
+        }
+        while (!name.isEmpty() && Character.isDigit(name.charAt(0))) {
+            name = name.substring(1).trim();
+        }
+        if (name.startsWith(".") || name.startsWith(":")) {
+            name = name.substring(1).trim();
+        }
+        return name;
+    }
+
+    @Nullable
+    private static Topic tryParseAfter(List<String> data, int multiplier) {
+        int at = data.size() - 1;
+        int last = data.size();
+        List<Question> answers = new ArrayList<>();
+        for (int i = 5; i >= 1; i--) {
+            if (at < 0) {
+                cantParse(data);
+                return null;
+            }
+            String prefix = Integer.toString(i * multiplier);
+            String current = data.get(at);
+            if (current.startsWith(prefix + " ") || current.startsWith(prefix + ".") || current.startsWith(prefix +
+                    ":")) {
+                answers.add(parseQuestion(data.subList(at, last), i * multiplier, i * 10));
+                last = at;
+            }
+            at--;
+        }
+        at--;
+        List<Question> questions = new ArrayList<>();
+        for (int i = 5; i >= 1; i--) {
+            if (at < 0) {
+                cantParse(data);
+                return null;
+            }
+            String prefix = Integer.toString(i * multiplier);
+            String current = data.get(at);
+            if (current.startsWith(prefix + " ") || current.startsWith(prefix + ".") || current.startsWith(prefix +
+                    ":")) {
+                Question question = parseQuestion(data.subList(at, last), i * multiplier, i * 10);
+                List<String> curAnswers = new ArrayList<>();
+                Question allAnswers = answers.get(5 - i);
+                curAnswers.add(allAnswers.question);
+                curAnswers.addAll(allAnswers.answers);
+                question = new Question(question.cost, question.question, curAnswers, allAnswers.comment);
+                if (allAnswers.question.trim().isEmpty()) {
+                    cantParse(data);
+                    return null;
+                }
+                questions.add(question);
+                last = at;
+            }
+            at--;
+        }
+        Collections.reverse(questions);
+        return new Topic(getTopicName(data, at + 1), questions);
+    }
+
+    private static void cantParse(List<String> data) {
+        for (String ss : data) {
+            System.err.println(ss);
+        }
+        System.err.println();
     }
 
     private static String ridOf(String s, String sample) {
