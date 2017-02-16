@@ -7,6 +7,7 @@ import net.egork.telegram.svoyak.data.TopicSet;
 import net.egork.telegram.svoyak.scheduler.SchedulerMain;
 import org.jetbrains.annotations.NotNull;
 import org.telegram.telegrambots.api.objects.Message;
+import org.telegram.telegrambots.api.objects.User;
 
 import java.util.*;
 import java.util.concurrent.Executor;
@@ -63,6 +64,9 @@ public class Game implements Runnable {
     private Map<Integer, String> users = new HashMap<Integer, String>();
     private Map<Integer, Integer> score = new HashMap<Integer, Integer>();
 
+    private Set<Integer> presentPlayers = new HashSet<>();
+    private int minutesWaited;
+
     private List<Integer> answers;
     private int correct;
 
@@ -105,7 +109,7 @@ public class Game implements Runnable {
                     sendMessage("Регистрация открыта", null);
                 } else {
                     state = State.BEFORE_GAME;
-                    sendMessage("Добро пожаловать", null, 30000);
+                    sendMessage("Добро пожаловать", null, 60000);
                     timer = new Timer();
                     timer.scheduleAtFixedRate(new TimerTask() {
                         @Override
@@ -161,7 +165,13 @@ public class Game implements Runnable {
                 scheduler.kickUsers(chatId);
                 return;
             case BEFORE_GAME:
-                startGame();
+                minutesWaited++;
+                if (minutesWaited == 5) {
+                    startGame();
+                } else {
+                    sendMessage("Некоторые игроки все еще не зашли в чат. Через " + (5 - minutesWaited) + " минут " +
+                            "игра начнется автоматически", null, 60000);
+                }
                 return;
             case BEFORE_TOPIC:
                 if (topicId == stopAt) {
@@ -294,6 +304,13 @@ public class Game implements Runnable {
         executor.execute(new Runnable() {
             @Override
             public void run() {
+                User newChatMember = message.getNewChatMember();
+                if (state == State.BEFORE_GAME && newChatMember != null && users.containsKey(newChatMember.getId())) {
+                    presentPlayers.add(newChatMember.getId());
+                    if (presentPlayers.size() == users.size()) {
+                        startGame();
+                    }
+                }
                 if (state == State.AFTER_GAME) {
                     actionExpires = Math.max(actionExpires, System.currentTimeMillis() + 60000);
                     return;
