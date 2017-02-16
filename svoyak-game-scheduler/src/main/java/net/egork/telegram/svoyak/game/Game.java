@@ -308,6 +308,7 @@ public class Game implements Runnable {
                 if (state == State.BEFORE_GAME && newChatMember != null && users.containsKey(newChatMember.getId())) {
                     presentPlayers.add(newChatMember.getId());
                     if (presentPlayers.size() == users.size()) {
+                        minutesWaited = 5;
                         sendMessage("Игра скоро начнется", null, 15000);
                     }
                     return;
