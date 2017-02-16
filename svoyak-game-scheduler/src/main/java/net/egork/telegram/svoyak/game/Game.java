@@ -308,8 +308,9 @@ public class Game implements Runnable {
                 if (state == State.BEFORE_GAME && newChatMember != null && users.containsKey(newChatMember.getId())) {
                     presentPlayers.add(newChatMember.getId());
                     if (presentPlayers.size() == users.size()) {
-                        startGame();
+                        sendMessage("Игра скоро начнется", null, 15000);
                     }
+                    return;
                 }
                 if (state == State.AFTER_GAME) {
                     actionExpires = Math.max(actionExpires, System.currentTimeMillis() + 60000);
