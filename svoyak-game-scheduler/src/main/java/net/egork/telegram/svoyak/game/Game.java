@@ -189,12 +189,15 @@ public class Game implements Runnable {
                 state = State.BEFORE_FIRST_QUESTION;
                 break;
             case BEFORE_FIRST_QUESTION:
-                currentQuestion = currentTopic.first();
+                currentQuestion = currentTopic.first().fix();
                 askQuestion();
                 break;
             case AFTER_QUESTION:
                 addResults();
                 currentQuestion = currentTopic.next(currentQuestion);
+                if (currentQuestion != null) {
+                    currentQuestion.fix();
+                }
                 if (currentQuestion == null) {
                     topicId++;
                     showScore();
