@@ -280,47 +280,53 @@ public class TopicSet {
         int last = data.size();
         List<Question> answers = new ArrayList<>();
         for (int i = 5; i >= 1; i--) {
-            if (at < 0) {
-                cantParse(data);
-                return null;
+            while (true) {
+                if (at < 0) {
+                    cantParse(data);
+                    return null;
+                }
+                String prefix = Integer.toString(i * multiplier);
+                String current = data.get(at);
+                if (current.startsWith(prefix + " ") || current.startsWith(prefix + ".") || current.startsWith(prefix +
+                        ":")) {
+                    answers.add(parseQuestion(data.subList(at, last), i * multiplier, i * 10));
+                    last = at;
+                    break;
+                }
+                at--;
             }
-            String prefix = Integer.toString(i * multiplier);
-            String current = data.get(at);
-            if (current.startsWith(prefix + " ") || current.startsWith(prefix + ".") || current.startsWith(prefix +
-                    ":")) {
-                answers.add(parseQuestion(data.subList(at, last), i * multiplier, i * 10));
-                last = at;
-            }
-            at--;
         }
         at--;
         List<Question> questions = new ArrayList<>();
         for (int i = 5; i >= 1; i--) {
-            if (at < 0) {
-                cantParse(data);
-                return null;
-            }
-            String prefix = Integer.toString(i * multiplier);
-            String current = data.get(at);
-            if (current.startsWith(prefix + " ") || current.startsWith(prefix + ".") || current.startsWith(prefix +
-                    ":")) {
-                Question question = parseQuestion(data.subList(at, last), i * multiplier, i * 10);
-                List<String> curAnswers = new ArrayList<>();
-                Question allAnswers = answers.get(5 - i);
-                curAnswers.add(allAnswers.question);
-                curAnswers.addAll(allAnswers.answers);
-                question = new Question(question.cost, question.question, curAnswers, allAnswers.comment);
-                if (allAnswers.question.trim().isEmpty()) {
+            while (true) {
+                if (at < 0) {
                     cantParse(data);
                     return null;
                 }
-                questions.add(question);
-                last = at;
+                String prefix = Integer.toString(i * multiplier);
+                String current = data.get(at);
+                if (current.startsWith(prefix + " ") || current.startsWith(prefix + ".") || current.startsWith(prefix +
+                        ":")) {
+                    Question question = parseQuestion(data.subList(at, last), i * multiplier, i * 10);
+                    List<String> curAnswers = new ArrayList<>();
+                    Question allAnswers = answers.get(5 - i);
+                    curAnswers.add(allAnswers.question);
+                    curAnswers.addAll(allAnswers.answers);
+                    question = new Question(question.cost, question.question, curAnswers, allAnswers.comment);
+                    if (allAnswers.question.trim().isEmpty()) {
+                        cantParse(data);
+                        return null;
+                    }
+                    questions.add(question);
+                    last = at;
+                    break;
+                }
+                at--;
             }
-            at--;
         }
         Collections.reverse(questions);
-        return new Topic(getTopicName(data, at + 1), questions);
+        return new Topic(getTopicName(data, last), questions);
     }
 
     private static void cantParse(List<String> data) {

@@ -55,7 +55,12 @@ public abstract class TelegramBot extends TelegramLongPollingBot {
         args.setText(text);
         args.setParseMode(ParseMode.HTML);
         args.setReplyMarkup(rkm);
+        int tries = 0;
         while (true) {
+            if (tries == 20) {
+                return null;
+            }
+            tries++;
             try {
                 return sendMessage(args);
             } catch (TelegramApiException e) {

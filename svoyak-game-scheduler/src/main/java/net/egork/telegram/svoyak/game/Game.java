@@ -166,10 +166,12 @@ public class Game implements Runnable {
                 return;
             case BEFORE_GAME:
                 minutesWaited++;
-                if (minutesWaited == 5) {
+                if (minutesWaited >= 5) {
                     startGame();
                 } else {
-                    sendMessage("Некоторые игроки все еще не зашли в чат. Через " + (5 - minutesWaited) + " минут " +
+                    sendMessage("Некоторые игроки все еще не зашли в чат. Через " + (5 - minutesWaited) + " минут" +
+                            (minutesWaited == 4 ? "у" : "ы") +
+                            " " +
                             "игра начнется автоматически", null, 60000);
                 }
                 return;

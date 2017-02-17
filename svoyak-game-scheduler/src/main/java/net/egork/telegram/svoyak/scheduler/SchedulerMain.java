@@ -101,6 +101,9 @@ public class SchedulerMain {
     }
 
     private void processMessage(Message message) {
+        if (message == null) {
+            return;
+        }
         Chat chat = message.getChat();
         if (chat.isUserChat()) {
             processPrivateMessage(message);
