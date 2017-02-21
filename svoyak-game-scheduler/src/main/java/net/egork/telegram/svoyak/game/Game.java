@@ -149,6 +149,11 @@ public class Game implements Runnable {
     @Override
     public void run() {
         if (System.currentTimeMillis() >= actionExpires) {
+            if (paused) {
+                sendMessage("Игра возобновлена", state == State.AFTER_QUESTION ? BREAK : null, INTERMISSION);
+                paused = false;
+                return;
+            }
             switch (state) {
             case BEFORE_QUESTION:
                 actionExpires = Long.MAX_VALUE;
@@ -169,10 +174,9 @@ public class Game implements Runnable {
                 if (minutesWaited >= 5) {
                     startGame();
                 } else {
-                    sendMessage("Некоторые игроки все еще не зашли в чат. Через " + (5 - minutesWaited) + " минут" +
+                    sendMessage("Некоторые игроки все еще не зашли в чат. Через " + (5 - minutesWaited) + " минут " +
                             (minutesWaited == 4 ? "у" : "ы") +
-                            " " +
-                            "игра начнется автоматически", null, 60000);
+                            " игра начнется автоматически", null, 60000);
                 }
                 return;
             case BEFORE_TOPIC:
@@ -189,16 +193,13 @@ public class Game implements Runnable {
                 state = State.BEFORE_FIRST_QUESTION;
                 break;
             case BEFORE_FIRST_QUESTION:
-                currentQuestion = currentTopic.first().fix();
+                currentQuestion = currentTopic.first();
                 askQuestion();
                 break;
             case AFTER_QUESTION:
                 addResults();
                 currentQuestion = currentTopic.next(currentQuestion);
                 if (currentQuestion != null) {
-                    currentQuestion.fix();
-                }
-                if (currentQuestion == null) {
                     topicId++;
                     showScore();
                     state = State.BEFORE_TOPIC;
@@ -404,8 +405,7 @@ public class Game implements Runnable {
                     state = State.ANSWER;
                 } else if ((command.equals("/pause") || command.equals("пауза")) && state != State.QUESTION && state
                         != State.ANSWER && !paused) {
-                    actionExpires = Long.MAX_VALUE;
-                    sendMessage("Игра приостановлена", state == State.AFTER_QUESTION ? PAUSED : null);
+                    sendMessage("Игра приостановлена", state == State.AFTER_QUESTION ? PAUSED : null, 600000);
                     paused = true;
                 } else if ((command.equals("/continue") || command.equals("продолжить")) && paused) {
                     sendMessage("Игра возобновлена", state == State.AFTER_QUESTION ? BREAK : null, INTERMISSION);
