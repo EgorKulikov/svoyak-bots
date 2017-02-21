@@ -15,11 +15,12 @@ public class Topic {
     }
 
     public Question next(Question current) {
-        int at = questions.indexOf(current);
-        if (at == -1 || at == questions.size() - 1) {
-            return null;
+        for (int i = 0; i < questions.size() - 1; i++) {
+            if (questions.get(i).cost == current.cost) {
+                return questions.get(i + 1);
+            }
         }
-        return questions.get(at + 1);
+        return null;
     }
 
     public Question first() {
