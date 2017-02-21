@@ -200,6 +200,9 @@ public class Game implements Runnable {
                 addResults();
                 currentQuestion = currentTopic.next(currentQuestion);
                 if (currentQuestion != null) {
+                    currentQuestion.fix();
+                }
+                if (currentQuestion == null) {
                     topicId++;
                     showScore();
                     state = State.BEFORE_TOPIC;
