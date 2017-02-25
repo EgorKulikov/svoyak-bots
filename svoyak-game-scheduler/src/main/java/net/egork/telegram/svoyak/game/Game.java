@@ -150,8 +150,8 @@ public class Game implements Runnable {
     public void run() {
         if (System.currentTimeMillis() >= actionExpires) {
             if (paused) {
-                sendMessage("Игра возобновлена", state == State.AFTER_QUESTION ? BREAK : null, INTERMISSION);
                 paused = false;
+                sendMessage("Игра возобновлена", state == State.AFTER_QUESTION ? BREAK : null, INTERMISSION);
                 return;
             }
             switch (state) {
