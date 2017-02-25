@@ -509,10 +509,8 @@ public class Game implements Runnable {
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    if (!paused) {
+                    if (!paused || delay == 600000) {
                         actionExpires = System.currentTimeMillis() + delay;
-                    } else {
-                        actionExpires = Math.max(actionExpires, System.currentTimeMillis() + delay);
                     }
                 }
             });
