@@ -161,6 +161,8 @@ public class Game implements Runnable {
                     lastQuestionId = id;
                     if (!paused) {
                         actionExpires = System.currentTimeMillis() + FIRST_QUESTION;
+                    } else {
+                        actionExpires = Math.max(actionExpires, System.currentTimeMillis() + FIRST_QUESTION);
                     }
                 });
                 state = State.QUESTION;
@@ -509,6 +511,8 @@ public class Game implements Runnable {
                 public void run() {
                     if (!paused) {
                         actionExpires = System.currentTimeMillis() + delay;
+                    } else {
+                        actionExpires = Math.max(actionExpires, System.currentTimeMillis() + delay);
                     }
                 }
             });
