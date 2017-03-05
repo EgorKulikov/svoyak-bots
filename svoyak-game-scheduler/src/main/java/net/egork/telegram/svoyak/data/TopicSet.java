@@ -290,13 +290,13 @@ public class TopicSet {
                 if (current.startsWith(prefix + " ") || current.startsWith(prefix + ".") || current.startsWith(prefix +
                         ":")) {
                     answers.add(parseQuestion(data.subList(at, last), i * multiplier, i * 10));
-                    last = at;
+                    last = at--;
                     break;
                 }
                 at--;
             }
         }
-        at--;
+        last = at--;
         List<Question> questions = new ArrayList<>();
         for (int i = 5; i >= 1; i--) {
             while (true) {
@@ -311,15 +311,17 @@ public class TopicSet {
                     Question question = parseQuestion(data.subList(at, last), i * multiplier, i * 10);
                     List<String> curAnswers = new ArrayList<>();
                     Question allAnswers = answers.get(5 - i);
-                    curAnswers.add(allAnswers.question);
+                    if (!allAnswers.question.trim().isEmpty()) {
+                        curAnswers.add(allAnswers.question.trim());
+                    }
                     curAnswers.addAll(allAnswers.answers);
                     question = new Question(question.cost, question.question, curAnswers, allAnswers.comment);
-                    if (allAnswers.question.trim().isEmpty()) {
+                    if (curAnswers.isEmpty()) {
                         cantParse(data);
                         return null;
                     }
                     questions.add(question);
-                    last = at;
+                    last = at--;
                     break;
                 }
                 at--;
