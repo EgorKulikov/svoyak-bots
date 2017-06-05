@@ -234,6 +234,24 @@ public class ScheduleChat {
                     DATA.blockSet(message.getFrom().getId(), argument);
                     sendMessage("Пакет " + argument + " заблокирован для пользователя " + Utils.name(new User(message.getFrom())));
                 }
+            case "/remains":
+            case "остаток":
+                if (argument == null || DATA.getSet(argument) == null) {
+                    sendMessage("Неизвестный пакет - " + argument);
+                } else {
+					Set<TopicId> set = DATA.getPlayed(message.getFrom().getId());
+					TopicSet topicSet = DATA.getSet(argument);
+					
+					int topicsLeft = 0;
+					for (int i = 1; i <= topicSet.topics.size(); i++) {
+						TopicId topicId = new TopicId(setId, i);
+						if (set == null || !set.contains(topicId)) {
+							topicsLeft++;
+						}
+					}
+					
+                    sendMessage("В пакете " + argument + " осталось " + topicsLeft + " неигранных тем для пользователя " + Utils.name(new User(message.getFrom())));
+                }
             default:
                 break;
         }
