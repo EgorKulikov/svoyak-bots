@@ -311,7 +311,7 @@ public class Data {
         int sinceLast = 0;
         int lastRating = 1000000;
         for (RatingEntry entry : list) {
-            if (entry.rating == 1500 && getPlayed(entry.id) == null) {
+            if (!lastPlayed.containsKey(entry.id) || (System.currentTimeMillis() - lastPlayed.get(entry.id).getTime()) / (1000 * 60 * 60 * 24) > 14) {
                 continue;
             }
             if (entry.rating != lastRating) {
