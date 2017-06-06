@@ -271,7 +271,7 @@ public class Data {
     public String getRatingList(int top) {
         List<RatingEntry> list = new ArrayList<>();
         for (Map.Entry<Integer, String> entry : players.entrySet()) {
-            list.add(new RatingEntry(entry.getValue(), rating.get(entry.getKey())));
+            list.add(new RatingEntry(entry.getValue(), rating.get(entry.getKey()), entry.getKey()));
         }
         Collections.sort(list);
         StringBuilder builder = new StringBuilder();
@@ -279,7 +279,7 @@ public class Data {
         int sinceLast = 0;
         int lastRating = 1000000;
         for (RatingEntry entry : list) {
-            if (entry.rating == 1500) {
+            if (entry.rating == 1500 && getPlayed(entry.id) == null) {
                 continue;
             }
             if (entry.rating != lastRating) {
@@ -317,10 +317,12 @@ public class Data {
     private static class RatingEntry implements Comparable<RatingEntry> {
         public final String name;
         public final int rating;
+        public final int id;
 
-        private RatingEntry(String name, int rating) {
+        private RatingEntry(String name, int rating, int id) {
             this.name = name;
             this.rating = rating;
+            this.id = id;
         }
 
         @Override
