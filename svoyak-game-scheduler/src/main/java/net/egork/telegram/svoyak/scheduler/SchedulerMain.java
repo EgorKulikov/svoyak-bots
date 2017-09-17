@@ -29,16 +29,14 @@ public class SchedulerMain {
     private TelegramBot bot;
     private TelegramBot gameBot;
     private GameChat[] gameChats = {
-            new GameChat(-168357638L, "https://telegram.me/joinchat/DskhTQoI7wbPkJDnCEwh5A"),
-            new GameChat(-158229596L, "https://telegram.me/joinchat/DskhTQluZFzfv0-HZl4lzg"),
-            new GameChat(-153565904L, "https://telegram.me/joinchat/DskhTQknOtDStaSM-7IdRg"),
-            new GameChat(-171488976L, "https://telegram.me/joinchat/DskhTQo4ttAnVADN4N1qug"),
-            new GameChat(-161277865L, "https://telegram.me/joinchat/DskhTQmc56krZ-dAzABAKg"),
-            new GameChat(-133600742L, "https://telegram.me/joinchat/DskhTQf2leb1ZcwdpfoDjA"),
-            new GameChat(-175626233L, "https://telegram.me/joinchat/DskhTQp31_mwpywmyEapLA"),
-            new GameChat(-154086751L, "https://telegram.me/joinchat/DskhTQkvLV8izpzS5xnNPA"),
-            new GameChat(-171107176L, "https://telegram.me/joinchat/DskhTQoy42jf_90PBMJFog"),
-            new GameChat(-154677332L, "https://telegram.me/joinchat/DskhTQk4MFSq-NoT-hV_Aw"),
+            new GameChat(-228225536L, "https://t.me/joinchat/GJNnBw2acgB5jCNmxQz7Cw"),
+            new GameChat(-229391511L, "https://t.me/joinchat/GJNnBw2sPJfNshayZMsR9g"),
+            new GameChat(-236588404L, "https://t.me/joinchat/GJNnBw4aDXTW7Y4ID9wP4w"),
+            new GameChat(-245541916L, "https://t.me/joinchat/GJNnBw6irByTt84YdTUsOw"),
+            new GameChat(-226855326L, "https://t.me/joinchat/GJNnBw2FiZ79oP-ZZU24ZQ"),
+            new GameChat(-206514530L, "https://t.me/joinchat/GJNnBwxPKWLAf4_ZbAEGbw"),
+            new GameChat(-168291881L, "https://t.me/joinchat/GJNnBwoH7imkOdRd_7WkPw"),
+            new GameChat(-242420856L, "https://t.me/joinchat/GJNnBw5zDHhGqmzrvwV9dg"),
     };
 
     private Executor executor = Executors.newSingleThreadExecutor();
