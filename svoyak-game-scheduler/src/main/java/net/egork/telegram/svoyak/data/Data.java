@@ -18,6 +18,7 @@ public class Data {
     private Map<Integer, Set<TopicId>> played = new HashMap<>();
     private Map<Integer, String> players = new HashMap<>();
     private Map<Integer, Integer> rating = new HashMap<>();
+    private Map<Integer, Date> lastPlayed = new HashMap<>();
 
     private Data() {
         loadList("active.list", activePackages);
@@ -31,14 +32,42 @@ public class Data {
         try {
             BufferedReader reader = new BufferedReader(new FileReader("player.list"));
             String s;
+            String format = "";
             while ((s = reader.readLine()) != null) {
-                int userId = Integer.parseInt(s);
-                s = reader.readLine();
-                String name = s;
-                s = reader.readLine();
-                int rat = Integer.parseInt(s);
-                players.put(userId, name);
-                rating.put(userId, rat);
+                if (format.isEmpty()) {
+                    format = s.toLowerCase();
+                    if (format.indexOf("format: ") != 0) {
+                        format = "old";
+                    }
+                    else {
+                        s = reader.readLine();
+                    }
+                }
+
+                switch (format){
+                    case "format: userid, name, rating, lastplayed":
+                        int userId = Integer.parseInt(s);
+                        s = reader.readLine();
+                        String name = s;
+                        s = reader.readLine();
+                        int rat = Integer.parseInt(s);
+                        s = reader.readLine();
+                        Date date = new Date(Long.parseLong(s));
+                        players.put(userId, name);
+                        rating.put(userId, rat);
+                        lastPlayed.put(userId, date);
+                        break;
+                    default:
+                        userId = Integer.parseInt(s);
+                        s = reader.readLine();
+                        name = s;
+                        s = reader.readLine();
+                        rat = Integer.parseInt(s);
+                        players.put(userId, name);
+                        rating.put(userId, rat);
+                        lastPlayed.put(userId, new Date());
+                        break;
+                }
             }
             reader.close();
         } catch (IOException ignored) {
@@ -48,10 +77,12 @@ public class Data {
     private void savePlayers() {
         try {
             PrintWriter out = new PrintWriter("player.list");
+            out.println("Format: userId, name, rating, lastPlayed");
             for (Map.Entry<Integer, String> entry : players.entrySet()) {
                 out.println(entry.getKey());
                 out.println(entry.getValue());
                 out.println(rating.get(entry.getKey()));
+                out.println(lastPlayed.get(entry.getKey()).getTime());
             }
             out.close();
         } catch (IOException ignored) {
@@ -264,6 +295,7 @@ public class Data {
         }
         for (Map.Entry<Integer, Integer> entry : updated.entrySet()) {
             rating.put(entry.getKey(), Math.max(1, entry.getValue()));
+            lastPlayed.put(entry.getKey(), new Date());
         }
         savePlayers();
     }
@@ -271,7 +303,7 @@ public class Data {
     public String getRatingList(int top) {
         List<RatingEntry> list = new ArrayList<>();
         for (Map.Entry<Integer, String> entry : players.entrySet()) {
-            list.add(new RatingEntry(entry.getValue(), rating.get(entry.getKey())));
+            list.add(new RatingEntry(entry.getValue(), rating.get(entry.getKey()), entry.getKey()));
         }
         Collections.sort(list);
         StringBuilder builder = new StringBuilder();
@@ -279,7 +311,7 @@ public class Data {
         int sinceLast = 0;
         int lastRating = 1000000;
         for (RatingEntry entry : list) {
-            if (entry.rating == 1500) {
+            if (!lastPlayed.containsKey(entry.id) || (System.currentTimeMillis() - lastPlayed.get(entry.id).getTime()) / (1000 * 60 * 60 * 24) > 14) {
                 continue;
             }
             if (entry.rating != lastRating) {
@@ -317,10 +349,12 @@ public class Data {
     private static class RatingEntry implements Comparable<RatingEntry> {
         public final String name;
         public final int rating;
+        public final int id;
 
-        private RatingEntry(String name, int rating) {
+        private RatingEntry(String name, int rating, int id) {
             this.name = name;
             this.rating = rating;
+            this.id = id;
         }
 
         @Override
