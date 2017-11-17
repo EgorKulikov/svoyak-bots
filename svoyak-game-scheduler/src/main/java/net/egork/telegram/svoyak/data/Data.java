@@ -1,5 +1,6 @@
 package net.egork.telegram.svoyak.data;
 
+import net.egork.telegram.svoyak.Utils;
 import net.egork.telegram.svoyak.scheduler.TopicId;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,6 +12,7 @@ import java.util.*;
  */
 public class Data {
     public static final Data DATA = new Data();
+    public static final long DAY = 24 * 60 * 60 * 1000L;
 
     private List<String> activePackages = new ArrayList<>();
     private List<String> allPackages = new ArrayList<>();
@@ -18,6 +20,8 @@ public class Data {
     private Map<Integer, Set<TopicId>> played = new HashMap<>();
     private Map<Integer, String> players = new HashMap<>();
     private Map<Integer, Integer> rating = new HashMap<>();
+    private Map<String, Set<TopicId>> playedByName = new HashMap<>();
+    private long nextReset;
 
     private Data() {
         loadList("active.list", activePackages);
@@ -25,6 +29,60 @@ public class Data {
         loadPlayers();
         loadSets();
         loadPlayed();
+        loadPlayedByName();
+        loadNextReset();
+    }
+
+    private void loadNextReset() {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader("nextreset"));
+            nextReset = Long.parseLong(reader.readLine());
+        } catch (IOException | NumberFormatException e) {
+            Date now = new Date();
+            now.setHours(0);
+            now.setMinutes(0);
+            now.setSeconds(0);
+            nextReset = now.getTime() + DAY;
+        }
+    }
+
+    public long getNextReset() {
+        return nextReset;
+    }
+
+    public void updateNextReset() {
+        nextReset += DAY;
+        try {
+            PrintWriter out = new PrintWriter("nextreset");
+            out.println(nextReset);
+            out.close();
+        } catch (IOException ignored) {
+        }
+    }
+
+    private void loadPlayedByName() {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader("playedByName.list"));
+            String s;
+            while ((s = reader.readLine()) != null) {
+                String userName = s;
+                Set<TopicId> current = new HashSet<>();
+                while (true) {
+                    String setId = reader.readLine();
+                    if (setId.isEmpty()) {
+                        break;
+                    }
+                    String played = reader.readLine();
+                    for (int i = 0; i < played.length(); i++) {
+                        if (played.charAt(i) == 'X') {
+                            current.add(new TopicId(setId, i + 1));
+                        }
+                    }
+                }
+                playedByName.put(userName, current);
+            }
+        } catch (IOException ignored) {
+        }
     }
 
     private void loadPlayers() {
@@ -149,7 +207,13 @@ public class Data {
         return sets.get(id);
     }
 
-    public Set<TopicId> getPlayed(int id) {
+    public Set<TopicId> getPlayed(int id, User user) {
+        if (!played.containsKey(id)) {
+            String name = Utils.name(user);
+            if (playedByName.containsKey(name)) {
+                played.put(id, playedByName.get(name));
+            }
+        }
         return played.get(id);
     }
 
@@ -308,7 +372,7 @@ public class Data {
     public void ratingDiscount() {
         for (int id : rating.keySet()) {
             int current = rating.get(id);
-            current = 1500 + (current - 1500) * 9 / 10;
+            current = 1500 + (current - 1500) * 99 / 100;
             rating.put(id, current);
         }
         savePlayers();

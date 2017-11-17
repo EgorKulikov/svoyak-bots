@@ -67,6 +67,7 @@ public class ScheduleChat {
         if (command.endsWith("@SvoyakSchedulerBot".toLowerCase())) {
             command = command.substring(0, command.length() - "@SvoyakSchedulerBot".length());
         }
+        boolean isShuttingDown = scheduler.isShuttingDown();
         switch (command) {
             case "/help":
             case "помощь":
@@ -156,6 +157,10 @@ public class ScheduleChat {
             case "/register":
             case "регистрация":
             case "+":
+                if (isShuttingDown) {
+                    shuttingDown();
+                    break;
+                }
                 if (currentGame == null) {
                     createGame();
                 }
@@ -171,6 +176,10 @@ public class ScheduleChat {
                 break;
             case "/spectator":
             case "зритель":
+                if (isShuttingDown) {
+                    shuttingDown();
+                    break;
+                }
                 if (currentGame == null) {
                     sendMessage("Игра не начата");
                 } else {
@@ -190,6 +199,10 @@ public class ScheduleChat {
                 break;
             case "/start":
             case "старт":
+                if (isShuttingDown) {
+                    shuttingDown();
+                    break;
+                }
                 if (currentGame == null) {
                     sendMessage("Игра не начата");
                 } else if (currentGame.getPlayers().size() < currentGame.getMinPlayers()) {
@@ -237,5 +250,13 @@ public class ScheduleChat {
             default:
                 break;
         }
+    }
+
+    public void shuttingDown() {
+        sendMessage("Бот в ближайшее время будет перезагружен. Создание новых игр временно отключено.");
+    }
+
+    public void ratingUpdate() {
+        sendMessage("Произошла ежедневная депрекация рейтинга. Топ20:\n" + DATA.getRatingList(20));
     }
 }

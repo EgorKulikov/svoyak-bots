@@ -2,13 +2,14 @@ package net.egork.telegram.svoyak.scheduler;
 
 import net.egork.telegram.TelegramBot;
 import net.egork.telegram.svoyak.Utils;
-import net.egork.telegram.svoyak.data.*;
+import net.egork.telegram.svoyak.data.Data;
+import net.egork.telegram.svoyak.data.Topic;
+import net.egork.telegram.svoyak.data.TopicSet;
 import net.egork.telegram.svoyak.game.Game;
 import org.jetbrains.annotations.NotNull;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.objects.*;
-import org.telegram.telegrambots.api.objects.User;
 import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
 
 import java.io.BufferedReader;
@@ -38,6 +39,7 @@ public class SchedulerMain {
             new GameChat(-168291881L, "https://t.me/joinchat/GJNnBwoH7imkOdRd_7WkPw"),
             new GameChat(-242420856L, "https://t.me/joinchat/GJNnBw5zDHhGqmzrvwV9dg"),
     };
+    private boolean shuttingDown = false;
 
     private Executor executor = Executors.newSingleThreadExecutor();
     private Map<Long, ScheduleChat> chats = new HashMap<>();
@@ -68,6 +70,20 @@ public class SchedulerMain {
         } catch (TelegramApiRequestException e) {
             throw new RuntimeException(e);
         }
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                executor.execute(() -> {
+                    if (System.currentTimeMillis() >= Data.DATA.getNextReset()) {
+                        Data.DATA.ratingDiscount();
+                        for (ScheduleChat chat : chats.values()) {
+                            chat.ratingUpdate();
+                        }
+                        Data.DATA.updateNextReset();
+                    }
+                });
+            }
+        }, 0, 60000);
     }
 
     private void processPlayMessage(Message message) {
@@ -225,9 +241,12 @@ public class SchedulerMain {
                         bot.sendMessage(chatId, list.toString());
                     }
                     break;
-                case "/weeklyreset":
-                    DATA.ratingDiscount();
-                    bot.sendMessage(chatId, "Рейтинг дисконтирован");
+                case "/shutdown":
+                case "выключение":
+                    shuttingDown = true;
+                    for (ScheduleChat chat : chats.values()) {
+                        chat.shuttingDown();
+                    }
                     break;
                 default:
                     bot.sendMessage(chatId, "Неизвестная команда - " + command);
@@ -257,7 +276,7 @@ public class SchedulerMain {
                 TopicId topicId = new TopicId(setId, i);
                 boolean good = true;
                 for (net.egork.telegram.svoyak.data.User user : currentGame.getPlayers()) {
-                    Set<TopicId> set = DATA.getPlayed(user.getId());
+                    Set<TopicId> set = DATA.getPlayed(user.getId(), user);
                     if (set != null && set.contains(topicId)) {
                         good = false;
                     }
@@ -373,5 +392,9 @@ public class SchedulerMain {
             }
         }
         return builder.toString();
+    }
+
+    public boolean isShuttingDown() {
+        return shuttingDown;
     }
 }

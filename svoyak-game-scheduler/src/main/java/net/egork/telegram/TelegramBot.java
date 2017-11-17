@@ -96,7 +96,7 @@ public abstract class TelegramBot extends TelegramLongPollingBot {
                 public void run() {
                     executor.execute(() -> sendMessageImpl(chatId, text, keyboard, callback));
                 }
-            }, nextTimeSlot.get(chatId) - System.currentTimeMillis() + 100);
+            }, Math.max(0, nextTimeSlot.get(chatId) - System.currentTimeMillis()) + 100);
             return;
         }
         if (text.length() > 4096) {
