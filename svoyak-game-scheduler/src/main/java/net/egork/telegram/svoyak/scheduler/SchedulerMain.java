@@ -6,6 +6,8 @@ import net.egork.telegram.svoyak.data.Data;
 import net.egork.telegram.svoyak.data.Topic;
 import net.egork.telegram.svoyak.data.TopicSet;
 import net.egork.telegram.svoyak.game.Game;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
@@ -27,6 +29,8 @@ import static net.egork.telegram.svoyak.data.Data.DATA;
  */
 public class SchedulerMain {
     private static TelegramBotsApi botsApi;
+    private static Log log = LogFactory.getLog(SchedulerMain.class);
+
     private TelegramBot bot;
     private TelegramBot gameBot;
     private GameChat[] gameChats = {
@@ -87,17 +91,21 @@ public class SchedulerMain {
     }
 
     private void processPlayMessage(Message message) {
-        for (GameChat chat : gameChats) {
-            if (chat.chatId == message.getChat().getId()) {
-                Game game = chat.getGame();
-                if (game != null) {
-                    game.process(message);
+        if (message != null) {
+            for (GameChat chat : gameChats) {
+                if (chat.chatId == message.getChat().getId()) {
+                    Game game = chat.getGame();
+                    if (game != null) {
+                        game.process(message);
+                    }
+                    return;
                 }
-                return;
             }
+            gameBot.sendMessage(message.getChat().getId(), "Для игры пройдите в официальный канал - https://telegram.me/joinchat/BNC7RD7LLZ1gSQlsQh1NPw");
+            System.err.println(message.getChat().getId());
+        } else {
+            log.warn("Null message");
         }
-        gameBot.sendMessage(message.getChat().getId(), "Для игры пройдите в официальный канал - https://telegram.me/joinchat/BNC7RD7LLZ1gSQlsQh1NPw");
-        System.err.println(message.getChat().getId());
     }
 
     private void loadProperties() {
