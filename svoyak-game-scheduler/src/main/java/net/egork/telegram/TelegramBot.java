@@ -118,6 +118,9 @@ public abstract class TelegramBot extends TelegramLongPollingBot {
                 row.add(button);
             }
             ((ReplyKeyboardMarkup)markup).setKeyboard(Collections.singletonList(row));
+
+            // Resize keyboard for better look at phone or small screen
+            markup.setResizeKeyboard(true);
         } else {
             markup = null;
         }
