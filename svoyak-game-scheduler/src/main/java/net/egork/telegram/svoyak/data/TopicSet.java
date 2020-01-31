@@ -21,7 +21,7 @@ public class TopicSet {
     public String description;
     public List<Topic> topics;
 
-    private TopicSet(String shortName, String description, List<Topic> topics) {
+    public TopicSet(String shortName, String description, List<Topic> topics) {
         this.shortName = shortName;
         this.description = description;
         this.topics = topics;
@@ -502,7 +502,8 @@ public class TopicSet {
                 }
                 topics.add(new Topic(subject, questions));
             }
-        } catch (NullPointerException ignored) {}
+        } catch (NullPointerException ignored) {
+        }
         return new TopicSet(description, null, topics);
     }
 
@@ -604,25 +605,23 @@ public class TopicSet {
         } catch (MalformedURLException e) {
             return null;
         }
-        BufferedReader in = null;
         try {
-            in = new BufferedReader(
-                    new InputStreamReader(oracle.openStream()));
+            InputStream inputStream = oracle.openStream();
+            return readStream(inputStream);
         } catch (IOException e) {
             return null;
         }
+    }
 
+    @Nullable
+    public static String readStream(InputStream inputStream) {
+        BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
         String inputLine;
         StringBuilder builder = new StringBuilder();
         try {
             while ((inputLine = in.readLine()) != null) {
                 builder.append(inputLine + " ");
             }
-        } catch (IOException e) {
-            return null;
-        }
-        try {
-            in.close();
         } catch (IOException e) {
             return null;
         }
