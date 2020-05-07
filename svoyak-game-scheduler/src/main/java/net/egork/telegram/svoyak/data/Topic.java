@@ -36,4 +36,13 @@ public class Topic {
         }
         return "темы";
     }
+
+    public Question byCost(int questionCost) {
+        for (Question question : questions) {
+            if (question.cost == questionCost) {
+                return question;
+            }
+        }
+        return null;
+    }
 }

@@ -1,5 +1,11 @@
 package net.egork.telegram.svoyak.data;
 
+import net.egork.telegram.svoyak.scheduler.GameChat;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 /**
  * @author egor@egork.net
  */
@@ -8,15 +14,19 @@ public class User {
     private final String firstName;
     private final String lastName;
     private final String userName;
-    private final org.telegram.telegrambots.api.objects.User user;
-
 
     public User(org.telegram.telegrambots.api.objects.User user) {
         id = user.getId();
         firstName = user.getFirstName();
         lastName = user.getLastName();
         userName = user.getLastName();
-        this.user = user;
+    }
+
+    public User(int id, String firstName, String lastName, String userName) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.userName = userName;
     }
 
     public int getId() {
@@ -50,7 +60,31 @@ public class User {
         return id;
     }
 
-    public org.telegram.telegrambots.api.objects.User getUser() {
-        return user;
+    public void saveUser(PrintWriter pw) {
+        GameChat.saveData(pw, "id", id);
+        GameChat.saveNullableData(pw, "first name", firstName);
+        GameChat.saveNullableData(pw, "last name", lastName);
+        GameChat.saveNullableData(pw, "username", userName);
+    }
+
+    public static User readUser(BufferedReader in, String label) throws IOException {
+        GameChat.expectLabel(in, label);
+        int id = Integer.parseInt(GameChat.readData(in, "id"));
+        String firstName = GameChat.readNullableData(in, "first name");
+        String lastName = GameChat.readNullableData(in, "last name");
+        String userName = GameChat.readNullableData(in, "username");
+        return new User(id, firstName, lastName, userName);
+    }
+
+    public static User readNullableUser(BufferedReader in, String label) throws IOException {
+        GameChat.expectLabel(in, label);
+        if (in.readLine().equals("0")) {
+            return null;
+        }
+        int id = Integer.parseInt(GameChat.readData(in, "id"));
+        String firstName = GameChat.readNullableData(in, "first name");
+        String lastName = GameChat.readNullableData(in, "last name");
+        String userName = GameChat.readNullableData(in, "username");
+        return new User(id, firstName, lastName, userName);
     }
 }

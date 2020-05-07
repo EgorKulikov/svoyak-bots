@@ -34,14 +34,31 @@ public class SchedulerMain {
     private TelegramBot bot;
     private TelegramBot gameBot;
     private GameChat[] gameChats = {
-            new GameChat(-228225536L, "https://t.me/joinchat/GJNnBw2acgB5jCNmxQz7Cw"),
-            new GameChat(-329127234L, "https://t.me/joinchat/GJNnBxOeFULm1IzyWvAppA"),
-            new GameChat(-236588404L, "https://t.me/joinchat/GJNnBw4aDXTW7Y4ID9wP4w"),
-            new GameChat(-245541916L, "https://t.me/joinchat/GJNnBw6irByTt84YdTUsOw"),
-            new GameChat(-226855326L, "https://t.me/joinchat/GJNnBw2FiZ79oP-ZZU24ZQ"),
-            new GameChat(-206514530L, "https://t.me/joinchat/GJNnBwxPKWLAf4_ZbAEGbw"),
-            new GameChat(-168291881L, "https://t.me/joinchat/GJNnBwoH7imkOdRd_7WkPw"),
-            new GameChat(-242420856L, "https://t.me/joinchat/GJNnBw5zDHhGqmzrvwV9dg"),
+            new GameChat(-228225536L, "https://t.me/joinchat/GJNnBw2acgB5jCNmxQz7Cw"), //1
+            new GameChat(-329127234L, "https://t.me/joinchat/GJNnBxOeFULm1IzyWvAppA"), //2
+            new GameChat(-236588404L, "https://t.me/joinchat/GJNnBw4aDXTW7Y4ID9wP4w"), //3
+            new GameChat(-245541916L, "https://t.me/joinchat/GJNnBw6irByTt84YdTUsOw"), //4
+            new GameChat(-226855326L, "https://t.me/joinchat/GJNnBw2FiZ79oP-ZZU24ZQ"), //5
+            new GameChat(-206514530L, "https://t.me/joinchat/GJNnBwxPKWLAf4_ZbAEGbw"), //6
+            new GameChat(-168291881L, "https://t.me/joinchat/GJNnBwoH7imkOdRd_7WkPw"), //7
+            new GameChat(-242420856L, "https://t.me/joinchat/GJNnBw5zDHhGqmzrvwV9dg"), //8
+            new GameChat(-242471117L, "https://t.me/joinchat/GJNnBw5z0M0nBWY-Gm6lnQ"), //9
+            new GameChat(-392693418L, "https://t.me/joinchat/GJNnBxdoBqpAnxZ02byu2w"), //10
+            new GameChat(-342143810L, "https://t.me/joinchat/GJNnBxRks0Lnj2U_b4O15A"), //11
+            new GameChat(-393136901L, "https://t.me/joinchat/GJNnBxduywU6FWKMLBPFqA"), //12
+            new GameChat(-180816705L, "https://t.me/joinchat/GJNnBwrHC0EFM0jXROideA"), //13
+            new GameChat(-378182305L, "https://t.me/joinchat/GJNnBxaKmqHFuUmkIo9WnA"), //14
+            new GameChat(-325380559L, "https://t.me/joinchat/GJNnBxNk6c--y3u1cbQ46w"), //15
+            new GameChat(-491132102L, "https://t.me/joinchat/GJNnBx1GFMZPQwtpds6zVg"), //16
+            new GameChat(-449854638L, "https://t.me/joinchat/GJNnBxrQPK53QYrhhauJYQ"), //17
+            new GameChat(-354533468L, "https://t.me/joinchat/GJNnBxUhwFyi_6eiIPvb1g"), //18
+            new GameChat(-433467808L, "https://t.me/joinchat/GJNnBxnWMaBliBFTnjeAhQ"), //19
+            new GameChat(-450200834L, "https://t.me/joinchat/GJNnBxrVhQKkL4YyeM82iQ"), //20
+            new GameChat(-404974100L, "https://t.me/joinchat/GJNnBxgjahTu_r5Q5UqccA"), //21
+            new GameChat(-462410294L, "https://t.me/joinchat/GJNnBxuP0jaiLxBFWAOC1w"), //22
+            new GameChat(-392890526L, "https://t.me/joinchat/GJNnBxdrCJ4BN4mStvCzjw"), //23
+            new GameChat(-414430406L, "https://t.me/joinchat/GJNnBxiztMYfkcNn6EQhkQ"), //24
+            new GameChat(-442005867L, "https://t.me/joinchat/GJNnBxpYeWs6GkFeem2Otg"), //25
     };
     private boolean shuttingDown = false;
 
@@ -56,16 +73,22 @@ public class SchedulerMain {
 
     private void run() {
         loadProperties();
-        bot = new TelegramBot(System.getProperty("scheduler.token"), "SvoyakSchedulerBot") {
-            @Override
-            protected void processMessage(Message message) {
-                executor.execute(() -> SchedulerMain.this.processMessage(message));
-            }
-        };
         gameBot = new TelegramBot(System.getProperty("play.token"), "SvoyakPlayBot") {
             @Override
             protected void processMessage(Message message) {
                 executor.execute(() -> processPlayMessage(message));
+            }
+        };
+        executor.execute(() -> {
+            for (GameChat gameChat : gameChats) {
+                gameChat.loadLastGame(this);
+            }
+            System.err.println("Chats reloaded");
+        });
+        bot = new TelegramBot(System.getProperty("scheduler.token"), "SvoyakSchedulerBot") {
+            @Override
+            protected void processMessage(Message message) {
+                executor.execute(() -> SchedulerMain.this.processMessage(message));
             }
         };
         try {
@@ -163,12 +186,12 @@ public class SchedulerMain {
     private void kickIfNeeded(GameChat chat, User user) {
         if (chat.isFree() || (!chat.getGameData().getPlayers().contains(new net.egork.telegram.svoyak.data.User(user)) &&
                 !chat.getGameData().getSpectators().contains(new net.egork.telegram.svoyak.data.User(user)))) {
-            kickPlayer(chat.chatId, user);
+            kickPlayer(chat.chatId, user.getId());
         }
     }
 
-    private void kickPlayer(long chatId, User user) {
-        bot.kickPlayer(chatId, user.getId());
+    private void kickPlayer(long chatId, int userId) {
+        bot.kickPlayer(chatId, userId);
     }
 
     private void processPrivateMessage(Message message) {
@@ -310,13 +333,18 @@ public class SchedulerMain {
             }
             DATA.commitPlayed();
             currentGame.setSetId(setId);
+            boolean found = false;
             for (GameChat gameChat : gameChats) {
                 if (gameChat.isFree()) {
                     gameChat.setFree(false);
+                    found = true;
                     bot.sendMessage(id, "Для игры пройдите по ссылке: " + gameChat.inviteLink);
                     gameChat.startGame(this, id, topicSet, topics, currentGame);
                     break;
                 }
+            }
+            if (!found) {
+                bot.sendMessage(id, "На текущий момент свободных комнат нет");
             }
             return;
         }
@@ -360,10 +388,10 @@ public class SchedulerMain {
             if (gameChat.chatId == chatId) {
                 gameChat.setFree(true);
                 for (net.egork.telegram.svoyak.data.User user : gameChat.getGameData().getPlayers()) {
-                    kickPlayer(chatId, user.getUser());
+                    kickPlayer(chatId, user.getId());
                 }
                 for (net.egork.telegram.svoyak.data.User user : gameChat.getGameData().getSpectators()) {
-                    kickPlayer(chatId, user.getUser());
+                    kickPlayer(chatId, user.getId());
                 }
             }
         }

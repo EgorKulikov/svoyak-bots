@@ -1,7 +1,11 @@
 package net.egork.telegram.svoyak.scheduler;
 
 import net.egork.telegram.svoyak.Utils;
+import net.egork.telegram.svoyak.data.User;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +20,7 @@ public class GameData {
     private int maxPlayers = 4;
     private List<net.egork.telegram.svoyak.data.User> players = new ArrayList<>();
     private List<net.egork.telegram.svoyak.data.User> spectators = new ArrayList<>();
+    private User judge = null;
     private long lastUpdated = System.currentTimeMillis();
 
     public GameData() {
@@ -84,6 +89,14 @@ public class GameData {
         lastUpdated = System.currentTimeMillis();
     }
 
+    public User getJudge() {
+        return judge;
+    }
+
+    public void setJudge(User judge) {
+        this.judge = judge;
+    }
+
     public long getLastUpdated() {
         return lastUpdated;
     }
@@ -95,5 +108,37 @@ public class GameData {
                 "Игроков - " + minPlayers + "-" + maxPlayers + "\n" +
                 "Игроки: " + Utils.userList(players) + "\n" +
                 "Зрители: " + Utils.userList(spectators);
+    }
+
+    public void saveState(PrintWriter pw) {
+        pw.println("Game Data");
+        GameChat.saveData(pw, "set id", setId);
+        GameChat.saveData(pw, "topic count", topicCount);
+        GameChat.saveData(pw, "players", players.size());
+        for (User player : players) {
+            GameChat.saveData(pw, "player", player);
+        }
+        GameChat.saveData(pw, "spectators", spectators.size());
+        for (User spectator : spectators) {
+            GameChat.saveData(pw, "spectator", spectator);
+        }
+        GameChat.saveNullableData(pw, "judge", judge);
+    }
+
+    public static GameData loadState(BufferedReader in) throws IOException {
+        GameChat.expectLabel(in, "Game Data");
+        GameData gameData = new GameData();
+        gameData.setSetId(GameChat.readData(in, "set id"));
+        gameData.setTopicCount(Integer.parseInt(GameChat.readData(in, "topic count")));
+        int playerCount = Integer.parseInt(GameChat.readData(in, "players"));
+        for (int i = 0; i < playerCount; i++) {
+            gameData.addPlayer(User.readUser(in, "player"));
+        }
+        int specCount = Integer.parseInt(GameChat.readData(in, "spectators"));
+        for (int i = 0; i < specCount; i++) {
+            gameData.addPlayer(User.readUser(in, "spectator"));
+        }
+        gameData.setJudge(User.readNullableUser(in, "judge"));
+        return gameData;
     }
 }

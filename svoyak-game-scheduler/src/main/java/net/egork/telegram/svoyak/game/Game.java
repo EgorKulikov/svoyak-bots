@@ -4,11 +4,15 @@ import net.egork.telegram.svoyak.Utils;
 import net.egork.telegram.svoyak.data.Question;
 import net.egork.telegram.svoyak.data.Topic;
 import net.egork.telegram.svoyak.data.TopicSet;
+import net.egork.telegram.svoyak.scheduler.GameChat;
 import net.egork.telegram.svoyak.scheduler.SchedulerMain;
 import org.jetbrains.annotations.NotNull;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.User;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -41,6 +45,61 @@ public class Game implements Runnable {
         return state;
     }
 
+    public void saveState(PrintWriter pw) {
+        pw.println("Game state");
+        GameChat.saveData(pw, "topics", topics.size());
+        for (int topicId : topics) {
+            GameChat.saveData(pw, "topic", topicId);
+        }
+        GameChat.saveData(pw, "topic id", topicId);
+        GameChat.saveData(pw, "question cost", currentQuestion == null ? 10 : currentQuestion.cost);
+        GameChat.saveData(pw, "orig chat id", origChatId);
+        GameChat.saveData(pw, "score", score.size());
+        for (Map.Entry<Integer, Integer> entry : score.entrySet()) {
+            GameChat.saveData(pw, "id", entry.getKey());
+            GameChat.saveData(pw, "pts", entry.getValue());
+        }
+    }
+
+    public void loadState(BufferedReader br, List<net.egork.telegram.svoyak.data.User> players) throws IOException {
+        GameChat.expectLabel(br, "Game state");
+        int topicCount = Integer.parseInt(GameChat.readData(br, "topics"));
+        this.topics = new ArrayList<>(topicCount);
+        for (int i = 0; i < topicCount; i++) {
+            topics.add(Integer.parseInt(GameChat.readData(br, "topic")));
+        }
+        topicId = Integer.parseInt(GameChat.readData(br, "topic id"));
+        currentTopic = set.byIndex(topics.get(topicId));
+        currentQuestion = currentTopic.byCost(Integer.parseInt(GameChat.readData(br, "question cost")));
+        origChatId = Long.parseLong(GameChat.readData(br, "orig chat id"));
+        this.players = players;
+        for (net.egork.telegram.svoyak.data.User player : players) {
+            users.put(player.getId(), getName(player));
+        }
+        int scoreSize = Integer.parseInt(GameChat.readData(br, "score"));
+        for (int i = 0; i < scoreSize; i++) {
+            int id = Integer.parseInt(GameChat.readData(br, "id"));
+            int pts = Integer.parseInt(GameChat.readData(br, "pts"));
+            score.put(id, pts);
+        }
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                stopAt = topics.size();
+                state = State.BEFORE_QUESTION;
+                paused = true;
+                sendMessage("Игра возобновлена после перезапуска бота. Если результаты последнего вопроса не были внесены, воспользуйтесь функцией исправления. Игра находится на паузе", null, 600000);
+                timer = new Timer();
+                timer.scheduleAtFixedRate(new TimerTask() {
+                    @Override
+                    public void run() {
+                        executor.execute(Game.this);
+                    }
+                }, RATE, RATE);
+            }
+        });
+    }
+
     public enum State {
         BEFORE_TOPIC,
         BEFORE_FIRST_QUESTION,
@@ -67,7 +126,7 @@ public class Game implements Runnable {
     private Set<Integer> presentPlayers = new HashSet<>();
     private int minutesWaited;
 
-    private List<Integer> answers;
+    private List<Integer> answers = new ArrayList<>();
     private int correct;
 
     private long actionExpires;
@@ -75,9 +134,9 @@ public class Game implements Runnable {
     private net.egork.telegram.svoyak.data.User current;
 
     private long origChatId;
-    private long chatId;
+    private final GameChat gameChat;
     private SchedulerMain scheduler;
-    private final List<net.egork.telegram.svoyak.data.User> players;
+    private List<net.egork.telegram.svoyak.data.User> players;
     private List<Integer> topics;
 
     private volatile Executor executor = Executors.newSingleThreadExecutor();
@@ -85,13 +144,18 @@ public class Game implements Runnable {
     private Timer timer;
     private int lastQuestionId;
 
-    public Game(SchedulerMain scheduler, long originalChatId, long chatId, TopicSet set, List<Integer> topics,
-            List<net.egork.telegram.svoyak.data.User> players) {
+    public Game(SchedulerMain scheduler, GameChat gameChat, TopicSet set) {
         this.scheduler = scheduler;
+        this.gameChat = gameChat;
+        this.set = set;
+        tournamentGame = false;
+    }
+
+    public Game(SchedulerMain scheduler, long originalChatId, GameChat chat, TopicSet set, List<Integer> topics,
+            List<net.egork.telegram.svoyak.data.User> players) {
+        this(scheduler, chat, set);
         this.players = players;
-        this.tournamentGame = false;
         origChatId = originalChatId;
-        this.chatId = chatId;
         this.topics = topics;
         for (net.egork.telegram.svoyak.data.User user : players) {
             users.put(user.getId(), getName(user));
@@ -100,30 +164,24 @@ public class Game implements Runnable {
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                Game.this.set = set;
                 topicId = 0;
                 stopAt = topics.size();
-                if (tournamentGame) {
-                    state = State.REGISTRATION;
-                    actionExpires = Long.MAX_VALUE;
-                    sendMessage("Регистрация открыта", null);
-                } else {
-                    state = State.BEFORE_GAME;
-                    sendMessage("Добро пожаловать", null, 60000);
-                    timer = new Timer();
-                    timer.scheduleAtFixedRate(new TimerTask() {
-                        @Override
-                        public void run() {
-                            executor.execute(Game.this);
-                        }
-                    }, RATE, RATE);
-                }
+                state = State.BEFORE_GAME;
+                sendMessage("Добро пожаловать", null, 60000);
+                timer = new Timer();
+                timer.scheduleAtFixedRate(new TimerTask() {
+                    @Override
+                    public void run() {
+                        executor.execute(Game.this);
+                    }
+                }, RATE, RATE);
+                gameChat.saveState();
             }
         });
     }
 
     private void sendMessage(String message, String[] keyboard) {
-        scheduler.getGameBot().sendMessage(chatId, message, keyboard);
+        scheduler.getGameBot().sendMessage(gameChat.chatId, message, keyboard);
     }
 
     private void startGame() {
@@ -139,11 +197,11 @@ public class Game implements Runnable {
 
     private void sendMessage(String text, String[] keyboard, long delay) {
         actionExpires = Long.MAX_VALUE;
-        scheduler.getGameBot().sendMessage(chatId, text, keyboard, new CallBack(delay));
+        scheduler.getGameBot().sendMessage(gameChat.chatId, text, keyboard, new CallBack(delay));
     }
 
     private void editMessage(String text) {
-        scheduler.getGameBot().editMessage(chatId, lastQuestionId, text);
+        scheduler.getGameBot().editMessage(gameChat.chatId, lastQuestionId, text);
     }
 
     @Override
@@ -157,7 +215,7 @@ public class Game implements Runnable {
             switch (state) {
             case BEFORE_QUESTION:
                 actionExpires = Long.MAX_VALUE;
-                scheduler.getGameBot().sendMessage(chatId, getQuestionText(), EMPTY, id -> {
+                scheduler.getGameBot().sendMessage(gameChat.chatId, getQuestionText(), EMPTY, id -> {
                     lastQuestionId = id;
                     if (!paused) {
                         actionExpires = System.currentTimeMillis() + FIRST_QUESTION;
@@ -169,7 +227,7 @@ public class Game implements Runnable {
                 return;
             case AFTER_GAME:
                 timer.cancel();
-                scheduler.kickUsers(chatId);
+                scheduler.kickUsers(gameChat.chatId);
                 return;
             case BEFORE_GAME:
                 minutesWaited++;
@@ -204,6 +262,7 @@ public class Game implements Runnable {
                 if (currentQuestion != null) {
                     currentQuestion.fix();
                 }
+                gameChat.saveState();
                 if (currentQuestion == null) {
                     topicId++;
                     showScore();
@@ -309,6 +368,7 @@ public class Game implements Runnable {
         sendMessage("Вскоре бот удалит всех игроков из этой комнаты.\n" +
                     "Пожалуйста, не выходите самостоятельно!", null, 60000);
         scheduler.endGame(origChatId, set, score, users, aborted);
+        gameChat.removeSavedState();
     }
 
     public void process(Message message) {
@@ -415,11 +475,11 @@ public class Game implements Runnable {
                 } else if ((command.equals("/continue") || command.equals("продолжить")) && paused) {
                     sendMessage("Игра возобновлена", state == State.AFTER_QUESTION ? BREAK : null, INTERMISSION);
                     paused = false;
-                } else if ((command.equals("/yes") || command.equals("да")) && state == State.AFTER_QUESTION) {
+                } else if ((command.equals("/yes") || command.equals("да") && tokens.length == 1) && state == State.AFTER_QUESTION) {
                     if (!tournamentGame) {
                         fixAnswer(message, getName(user));
                     }
-                } else if ((command.equals("/no") || command.equals("нет")) && state == State.AFTER_QUESTION) {
+                } else if ((command.equals("/no") || command.equals("нет") && tokens.length == 1) && state == State.AFTER_QUESTION) {
                     if (!tournamentGame) {
                         discardAnswer(message, getName(user));
                     }

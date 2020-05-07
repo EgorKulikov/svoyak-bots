@@ -257,6 +257,6 @@ public class ScheduleChat {
     }
 
     public void ratingUpdate() {
-        sendMessage("Произошла ежедневная депрекация рейтинга. Топ20:\n" + DATA.getRatingList(20));
+        sendMessage("Произошла ежедневная дефенестрация рейтинга. Топ20:\n" + DATA.getRatingList(20));
     }
 }

@@ -100,6 +100,7 @@ public class Data {
             }
             reader.close();
         } catch (IOException ignored) {
+            ignored.printStackTrace();
         }
     }
 
