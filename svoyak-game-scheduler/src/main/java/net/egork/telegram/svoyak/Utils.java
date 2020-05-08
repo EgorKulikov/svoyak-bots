@@ -21,6 +21,17 @@ public class Utils {
         return builder.toString();
     }
 
+    public static String taggedUserList(List<User> users) {
+        StringBuilder builder = new StringBuilder();
+        for (User user : users) {
+            if (builder.length() > 0) {
+                builder.append(", ");
+            }
+            builder.append("<a href=\"tg://user?id=" + user.getId() + "\">" + name(user) + "</a>");
+        }
+        return builder.toString();
+    }
+
     public static String name(User user) {
 //        if (user.getUsername() != null) {
 //            return "@" + user.getUsername();

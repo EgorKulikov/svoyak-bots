@@ -338,7 +338,8 @@ public class SchedulerMain {
                 if (gameChat.isFree()) {
                     gameChat.setFree(false);
                     found = true;
-                    bot.sendMessage(id, "Для игры пройдите по ссылке: " + gameChat.inviteLink);
+
+                    bot.sendMessage(id, Utils.taggedUserList(currentGame.getPlayers()) + " - для игры пройдите по ссылке: " + gameChat.inviteLink);
                     gameChat.startGame(this, id, topicSet, topics, currentGame);
                     break;
                 }
