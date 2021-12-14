@@ -14,7 +14,7 @@
 
     <properties>
         <jacksonVersion>2.11.0</jacksonVersion>
-        <log4jVersion>2.13.2</log4jVersion>
+        <log4jVersion>2.16.0</log4jVersion>
         <httpClientVersion>4.5.1</httpClientVersion>
         <kotlin.version>1.0.3</kotlin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
