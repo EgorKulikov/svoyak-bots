@@ -207,6 +207,8 @@ public class ScheduleChat {
                     sendMessage("Игра не начата");
                 } else if (currentGame.getPlayers().size() < currentGame.getMinPlayers()) {
                     sendMessage("Недостаточно игроков");
+                } else if (!currentGame.getPlayers().contains(new User(message.getFrom()))) {
+                    sendMessage("Вы не являетесь игроком");
                 } else {
                     scheduler.tryStartNewGame(id, currentGame);
                     currentGame = null;
