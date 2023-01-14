@@ -23,9 +23,9 @@ import java.util.function.Consumer;
  */
 public class Game implements Runnable {
     private static final String[] PLUS = {"+"};
-    private static final String[] YES_NO = {"да", "нет"};
-    private static final String[] BREAK = {"да", "нет", "пауза"};
-    private static final String[] PAUSED = {"да", "нет", "продолжить"};
+    private static final String[] YES_NO = {"Да", "Нет"};
+    private static final String[] BREAK = {"Да", "Нет", "Пауза"};
+    private static final String[] PAUSED = {"Да", "Нет", "Продолжить"};
     private static final long RATE = 100;
     private static final long INTERMISSION = 8000;
     private static final long SUCCESSIVE_QUESTION = 10000;
